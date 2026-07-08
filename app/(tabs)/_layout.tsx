@@ -1,10 +1,10 @@
 import { Tabs } from 'expo-router';
-import { Search, Home, BookOpen, User } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { NAV_THEME } from '@/lib/theme';
 import { Icon } from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
 import { SunIcon, MoonStarIcon } from 'lucide-react-native';
+import { IconBook, IconSearch, IconStar, IconUser } from '@tabler/icons-react-native';
 
 const THEME_ICONS = {
   light: SunIcon,
@@ -19,7 +19,7 @@ function ThemeToggle() {
       onPressIn={toggleColorScheme}
       size="icon"
       variant="ghost"
-      className="ios:size-9 rounded-full web:mx-4 mr-4">
+      className="ios:size-9 mr-4 rounded-full web:mx-4">
       <Icon as={THEME_ICONS[colorScheme ?? 'light']} className="size-5" />
     </Button>
   );
@@ -27,7 +27,7 @@ function ThemeToggle() {
 
 export default function TabLayout() {
   const { colorScheme } = useColorScheme();
-  
+
   return (
     <Tabs
       screenOptions={{
@@ -38,28 +38,32 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Featured',
-          tabBarIcon: ({ color }) => <Icon as={Home} className="size-5" color={color} />,
+          headerShown: false,
+          tabBarIcon: ({ color }) => <Icon as={IconStar} className="size-5" color={color} />,
         }}
       />
       <Tabs.Screen
         name="search"
         options={{
           title: 'Search',
-          tabBarIcon: ({ color }) => <Icon as={Search} className="size-5" color={color} />,
+          headerShown: false,
+          tabBarIcon: ({ color }) => <Icon as={IconSearch} className="size-5" color={color} />,
         }}
       />
       <Tabs.Screen
         name="my-courses"
         options={{
           title: 'My Courses',
-          tabBarIcon: ({ color }) => <Icon as={BookOpen} className="size-5" color={color} />,
+          headerShown: false,
+          tabBarIcon: ({ color }) => <Icon as={IconBook} className="size-5" color={color} />,
         }}
       />
       <Tabs.Screen
         name="account"
         options={{
           title: 'Account',
-          tabBarIcon: ({ color }) => <Icon as={User} className="size-5" color={color} />,
+          headerShown: false,
+          tabBarIcon: ({ color }) => <Icon as={IconUser} className="size-5" color={color} />,
         }}
       />
     </Tabs>

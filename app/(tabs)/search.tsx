@@ -1,10 +1,10 @@
 import { View } from 'react-native';
-import { Text } from '@/components/ui/text';
+import { Input } from '@/components/ui/input';
 
 export default function SearchScreen() {
   return (
-    <View className="flex-1 items-center justify-center bg-background">
-      <Text>Search</Text>
+    <View className="flex-1 px-6 py-10">
+      <Input placeholder="Search" />
     </View>
   );
 }
