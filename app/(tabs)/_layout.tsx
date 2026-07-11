@@ -4,7 +4,16 @@ import { NAV_THEME } from '@/lib/theme';
 import { Icon } from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
 import { SunIcon, MoonStarIcon } from 'lucide-react-native';
-import { IconBook, IconSearch, IconStar, IconUser } from '@tabler/icons-react-native';
+import {
+  IconBook,
+  IconBookFilled,
+  IconSearch,
+  IconSearchFilled,
+  IconStar,
+  IconStarFilled,
+  IconUser,
+  IconUserFilled,
+} from '@tabler/icons-react-native';
 
 const THEME_ICONS = {
   light: SunIcon,
@@ -32,14 +41,16 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: NAV_THEME[colorScheme ?? 'light'].colors.primary,
-        headerRight: () => <ThemeToggle />,
+        // headerRight: () => <ThemeToggle />,
       }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Featured',
           headerShown: false,
-          tabBarIcon: ({ color }) => <Icon as={IconStar} className="size-5" color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Icon as={focused ? IconStarFilled : IconStar} className="size-6" color={color} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -47,7 +58,9 @@ export default function TabLayout() {
         options={{
           title: 'Search',
           headerShown: false,
-          tabBarIcon: ({ color }) => <Icon as={IconSearch} className="size-5" color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Icon as={focused ? IconSearchFilled : IconSearch} className="size-6" color={color} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -55,7 +68,9 @@ export default function TabLayout() {
         options={{
           title: 'My Courses',
           headerShown: false,
-          tabBarIcon: ({ color }) => <Icon as={IconBook} className="size-5" color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Icon as={focused ? IconBookFilled : IconBook} className="size-6" color={color} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -63,7 +78,9 @@ export default function TabLayout() {
         options={{
           title: 'Account',
           headerShown: false,
-          tabBarIcon: ({ color }) => <Icon as={IconUser} className="size-5" color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Icon as={focused ? IconUserFilled : IconUser} className="size-6" color={color} />
+          ),
         }}
       />
     </Tabs>

@@ -1,64 +1,111 @@
-import { Button } from '@/components/ui/button';
-import { Icon } from '@/components/ui/icon';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Text } from '@/components/ui/text';
 import { COURSE_DATA } from '@/const/courseData';
 import { IconCertificate, IconClock, IconUserCircle } from '@tabler/icons-react-native';
-import { Link } from 'expo-router';
-import { GraduationCap, MonitorPlay, MoonStarIcon, StarIcon, SunIcon } from 'lucide-react-native';
+import { Link, router } from 'expo-router';
+import { LucideIcon, MonitorPlay } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
-import { Image, type ImageStyle, View, ScrollView } from 'react-native';
-
-const LOGO = {
-  light: require('@/assets/images/react-native-reusables-light.png'),
-  dark: require('@/assets/images/react-native-reusables-dark.png'),
-};
-
-const IMAGE_STYLE: ImageStyle = {
-  height: 76,
-  width: 76,
-};
+import { Image, type ImageStyle, View, ScrollView, TouchableOpacity, Linking } from 'react-native';
 
 export default function FeaturedScreen() {
   const { colorScheme } = useColorScheme();
 
+  const handleCoursePress = (course: any) => {
+    router.push(course.slug);
+  };
+
   return (
-    <ScrollView className="flex-1" contentContainerClassName="px-4 py-20 pb-32">
-      <View className="flex-row gap-2">
-        <IconUserCircle size={52} strokeWidth={1} color={'#444'} />
-        <View>
-          <Text className="text-xl font-medium">Welcome, Ashish Bishnoi</Text>
-          <Text>Student</Text>
+    <View className="flex-1">
+      <ScrollView className="flex-1" contentContainerClassName="py-20">
+        <View className="flex-row gap-2 px-4">
+          <IconUserCircle size={52} strokeWidth={1} color={'#444'} />
+          <View>
+            <Text className="text-xl font-medium">Welcome, Ashish Bishnoi</Text>
+            <Text>Student</Text>
+          </View>
         </View>
+
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => Linking.openURL('https://www.rhhealthcaresimulation.com/courses')}>
+          <AspectRatio className="mt-12 w-full" ratio={16 / 9}>
+            <Image
+              source={{
+                uri: 'https://d2c3lsl35lix55.cloudfront.net/website-image/Registration+Page.png',
+              }}
+              className="h-full w-full"
+            />
+          </AspectRatio>
+        </TouchableOpacity>
+
+        <CourseCardsHorizontal onCoursePress={handleCoursePress} />
+
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => Linking.openURL('https://www.rhhealthcaresimulation.com/courses')}>
+          <AspectRatio className="mt-12 w-full" ratio={16 / 9}>
+            <Image
+              source={{
+                uri: 'https://d2c3lsl35lix55.cloudfront.net/website-image/Registration+Page.png',
+              }}
+              className="h-full w-full"
+            />
+          </AspectRatio>
+        </TouchableOpacity>
+
+        <CourseCardsHorizontal onCoursePress={handleCoursePress} />
+      </ScrollView>
+    </View>
+  );
+}
+
+function CourseCardsHorizontal({ onCoursePress }: { onCoursePress: (course: any) => void }) {
+  const CardDetailIcon = ({
+    IconComponent,
+    label,
+  }: {
+    IconComponent: LucideIcon;
+    label: string | number;
+  }) => {
+    return (
+      <View className="mt-2 flex-row items-center gap-1">
+        <IconComponent color={'#666'} size={18} />
+        <Text className="text-sm">{label}</Text>
       </View>
-      <View className="mt-20 flex-col gap-8">
+    );
+  };
+  return (
+    <View>
+      <Text className="mt-12 px-4 text-xl font-semibold">Popular for Nursing/Paramedic</Text>
+      <ScrollView
+        horizontal
+        className="mt-3 pl-4"
+        showsHorizontalScrollIndicator={false}
+        contentContainerClassName="gap-8">
         {COURSE_DATA.map((courseItem) => {
           return (
-            <View key={courseItem.slug}>
+            <TouchableOpacity
+              key={courseItem.slug}
+              className="w-[70vw]"
+              activeOpacity={0.8}
+              onPress={() => onCoursePress(courseItem)}>
               <Image
                 source={{ uri: courseItem.bannerImage }}
-                className="mx-auto h-auto min-h-52 w-full overflow-hidden rounded-lg object-cover"
+                className="mx-auto h-auto min-h-40 w-full overflow-hidden rounded-lg object-cover"
                 resizeMode="contain"
               />
-              <Text className="mt-3 text-lg font-medium leading-7">{courseItem.courseTitle}</Text>
+              <Text className="mt-3 font-medium leading-6">{courseItem.courseTitle}</Text>
               <View className="flex-row gap-6">
-                <View className="mt-2 flex-row items-center gap-0.5">
-                  <IconClock color={'#666'} size={20} />
-                  <Text>{courseItem.courseHour}</Text>
-                </View>
-                <View className="mt-2 flex-row items-center gap-0.5">
-                  <MonitorPlay color={'#666'} size={20} />
-                  <Text>{courseItem.numberOfLacture}</Text>
-                </View>
-                <View className="mt-2 flex-row items-center gap-0.5 text-green-600">
-                  <IconCertificate color={'#16a34a'} size={20} />
-                  <Text className="text-green-600">Certificate</Text>
-                </View>
+                <CardDetailIcon IconComponent={IconClock} label={courseItem.courseHour} />
+                <CardDetailIcon IconComponent={MonitorPlay} label={courseItem.numberOfLacture} />
+                <CardDetailIcon IconComponent={IconCertificate} label={'Certificate'} />
               </View>
-            </View>
+            </TouchableOpacity>
           );
         })}
-      </View>
-    </ScrollView>
+        <View className="w-0"></View>
+      </ScrollView>
+    </View>
   );
 }
