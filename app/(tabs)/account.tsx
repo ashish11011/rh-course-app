@@ -15,21 +15,31 @@ import {
   Presentation,
   Share,
   User,
+  LogOut,
 } from 'lucide-react-native';
 import { IconUserFilled } from '@tabler/icons-react-native';
+import { useDispatch } from 'react-redux';
+import { logout } from '@/store/authSlice';
+import * as SecureStore from 'expo-secure-store';
 
 export default function AccountScreen() {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
   const router = useRouter();
 
-  const handlePress = (link: any) => {
+  const dispatch = useDispatch();
+
+  const handlePress = async (link: any) => {
     if (link.name === 'Share this app') {
       RNShare.share({
         message: 'Check out this amazing app!',
       });
+    } else if (link.name === 'Logout') {
+      await SecureStore.deleteItemAsync('userToken');
+      dispatch(logout());
+      router.replace('/(auth)/login' as any);
     } else if (link.href) {
-      router.push(link.href);
+      router.push(link.href as any);
     }
   };
 
@@ -148,6 +158,10 @@ const ACCOUNT_LINKS = [
         name: 'Contact us',
         icon: Mail,
         href: '/support/contact-us',
+      },
+      {
+        name: 'Logout',
+        icon: LogOut,
       },
     ],
   },

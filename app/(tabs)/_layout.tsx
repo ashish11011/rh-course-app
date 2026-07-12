@@ -1,9 +1,11 @@
-import { Tabs } from 'expo-router';
+import { Tabs, router } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { NAV_THEME } from '@/lib/theme';
 import { Icon } from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
 import { SunIcon, MoonStarIcon } from 'lucide-react-native';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
 import {
   IconBook,
   IconBookFilled,
@@ -36,6 +38,14 @@ function ThemeToggle() {
 
 export default function TabLayout() {
   const { colorScheme } = useColorScheme();
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+
+  const requireAuth = (e: any) => {
+    if (!isAuthenticated) {
+      e.preventDefault();
+      router.push('/(auth)/login');
+    }
+  };
 
   return (
     <Tabs
@@ -65,6 +75,7 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="my-courses"
+        listeners={{ tabPress: requireAuth }}
         options={{
           title: 'My Courses',
           headerShown: false,
@@ -75,6 +86,7 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="account"
+        listeners={{ tabPress: requireAuth }}
         options={{
           title: 'Account',
           headerShown: false,

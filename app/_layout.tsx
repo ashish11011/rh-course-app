@@ -8,24 +8,63 @@ import { PortalHost } from '@rn-primitives/portal';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
+import { Provider, useDispatch } from 'react-redux';
+import { store } from '@/store';
+import { setCredentials } from '@/store/authSlice';
+import * as SecureStore from 'expo-secure-store';
+import { useEffect, useState } from 'react';
 
 export {
-  // Catch any errors thrown by the Layout component.
   ErrorBoundary,
 } from 'expo-router';
 
-export default function RootLayout() {
+function AppContent() {
   const { colorScheme } = useColorScheme();
+  const dispatch = useDispatch();
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    const loadToken = async () => {
+      try {
+        const token = await SecureStore.getItemAsync('userToken');
+        if (token) {
+          // You could optionally verify the token with your backend here
+          dispatch(setCredentials({ token }));
+        }
+      } catch (e) {
+        console.error('Failed to load token');
+      } finally {
+        setIsReady(true);
+      }
+    };
+    loadToken();
+  }, [dispatch]);
+
+  if (!isReady) {
+    return null; // Or a splash screen
+  }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }}>
       <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
         <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-        <Stack screenOptions={{ animation: 'slide_from_right' }}>
+        <Stack screenOptions={{ 
+          animation: 'slide_from_right',
+          contentStyle: { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }
+        }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         </Stack>
         <PortalHost />
       </ThemeProvider>
     </GestureHandlerRootView>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <Provider store={store}>
+      <AppContent />
+    </Provider>
   );
 }
