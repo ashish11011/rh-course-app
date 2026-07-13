@@ -13,6 +13,13 @@ import { store } from '@/store';
 import { setCredentials } from '@/store/authSlice';
 import * as SecureStore from 'expo-secure-store';
 import { useEffect, useState } from 'react';
+import messaging from '@react-native-firebase/messaging';
+import { requestUserPermission, getFCMToken, setupNotificationListeners } from '@/lib/notifications';
+
+// Register background handler early
+messaging().setBackgroundMessageHandler(async remoteMessage => {
+  console.log('Message handled in the background!', remoteMessage);
+});
 
 export {
   ErrorBoundary,
@@ -26,6 +33,8 @@ function AppContent() {
   useEffect(() => {
     const loadToken = async () => {
       try {
+        await requestUserPermission();
+        await getFCMToken();
         const token = await SecureStore.getItemAsync('userToken');
         if (token) {
           // You could optionally verify the token with your backend here
@@ -38,6 +47,11 @@ function AppContent() {
       }
     };
     loadToken();
+
+    const unsubscribe = setupNotificationListeners();
+    return () => {
+      unsubscribe();
+    };
   }, [dispatch]);
 
   if (!isReady) {

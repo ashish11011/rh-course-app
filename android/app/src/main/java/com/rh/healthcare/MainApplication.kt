@@ -1,4 +1,4 @@
-package com.anonymous.myapp
+package com.rh.healthcare
 
 import android.app.Application
 import android.content.res.Configuration
