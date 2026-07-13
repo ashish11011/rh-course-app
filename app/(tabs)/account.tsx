@@ -18,7 +18,7 @@ import {
   LogOut,
 } from 'lucide-react-native';
 import { IconUserFilled } from '@tabler/icons-react-native';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '@/store/authSlice';
 import * as SecureStore from 'expo-secure-store';
 
@@ -28,6 +28,7 @@ export default function AccountScreen() {
   const router = useRouter();
 
   const dispatch = useDispatch();
+  const user = useSelector((state: any) => state.auth.user);
 
   const handlePress = async (link: any) => {
     if (link.name === 'Share this app') {
@@ -55,8 +56,8 @@ export default function AccountScreen() {
             {/* <Text className="text-4xl font-bold text-gray-600">JD</Text> */}
             <IconUserFilled size={24} color={isDark ? '#e2e8f0' : '#000'} />
           </View>
-          <Text className="mb-1 text-2xl font-bold dark:text-white">Your account</Text>
-          <Text className="text-sm text-gray-500 dark:text-gray-400">johndoe@example.com</Text>
+          <Text className="mb-1 text-2xl font-bold dark:text-white">{user?.name || 'Your account'}</Text>
+          <Text className="text-sm text-gray-500 dark:text-gray-400">{user?.email || 'user@example.com'}</Text>
           <View className="h-12"></View>
         </View>
         <View className="my-12 flex w-full flex-col gap-5 px-5">

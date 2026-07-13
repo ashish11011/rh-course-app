@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, KeyboardAvoidingView, Platform, TouchableOpacity, Alert } from 'react-native';
+import { View, Platform, TouchableOpacity, Alert } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Text } from '@/components/ui/text';
 import { Input } from '@/components/ui/input';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -19,11 +20,7 @@ export default function VerifyOtpScreen() {
 
     setLoading(true);
     try {
-      // Mock API call - Replace with your actual backend endpoint
-      // const response = await api.post('/auth/verify', { email, code: otp });
-      
-      // Simulate network request
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await api.post('/api/auth/mobile/confirm', { email, code: otp });
       
       Alert.alert('Success', 'Account verified successfully!', [
         { text: 'OK', onPress: () => router.replace('/(auth)/login') }
@@ -35,11 +32,25 @@ export default function VerifyOtpScreen() {
     }
   };
 
+  const handleResendCode = async () => {
+    try {
+      await api.post('/api/auth/mobile/resend-code', { email });
+      Alert.alert('Success', 'Verification code resent successfully!');
+    } catch (error: any) {
+      Alert.alert('Error', error?.response?.data?.message || 'Failed to resend code');
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-950">
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1 justify-center px-6"
+      <KeyboardAwareScrollView 
+        className="flex-1 px-6" 
+        contentContainerClassName="flex-grow justify-center pt-12 pb-40"
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        enableOnAndroid={true}
+        extraScrollHeight={120}
+        extraHeight={120}
       >
         <View className="mb-10">
           <Text className="text-3xl font-bold dark:text-white">Verify Account</Text>
@@ -69,13 +80,15 @@ export default function VerifyOtpScreen() {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          className="mt-6 self-center"
-          onPress={() => router.back()}
-        >
-          <Text className="font-semibold text-gray-600 dark:text-gray-400">Back</Text>
-        </TouchableOpacity>
-      </KeyboardAvoidingView>
+        <View className="mt-6 flex-row justify-between w-full px-4">
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text className="font-semibold text-gray-600 dark:text-gray-400">Back</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleResendCode}>
+            <Text className="font-semibold text-blue-600">Resend Code</Text>
+          </TouchableOpacity>
+        </View>
+        </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }

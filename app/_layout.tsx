@@ -12,6 +12,7 @@ import { Provider, useDispatch } from 'react-redux';
 import { store } from '@/store';
 import { setCredentials } from '@/store/authSlice';
 import * as SecureStore from 'expo-secure-store';
+import api from '@/lib/api';
 import { useEffect, useState } from 'react';
 import messaging from '@react-native-firebase/messaging';
 import { requestUserPermission, getFCMToken, setupNotificationListeners } from '@/lib/notifications';
@@ -37,8 +38,15 @@ function AppContent() {
         await getFCMToken();
         const token = await SecureStore.getItemAsync('userToken');
         if (token) {
-          // You could optionally verify the token with your backend here
           dispatch(setCredentials({ token }));
+          try {
+            const userRes = await api.get('/api/auth/mobile/user');
+            if (userRes.data?.user) {
+              dispatch(setCredentials({ token, user: userRes.data.user }));
+            }
+          } catch (error) {
+            console.error('Failed to fetch user profile', error);
+          }
         }
       } catch (e) {
         console.error('Failed to load token');

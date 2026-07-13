@@ -5,62 +5,139 @@ import { IconCertificate, IconClock, IconUserCircle } from '@tabler/icons-react-
 import { Link, router } from 'expo-router';
 import { LucideIcon, MonitorPlay } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
-import * as React from 'react';
-import { Image, type ImageStyle, View, ScrollView, TouchableOpacity, Linking } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Image, type ImageStyle, View, ScrollView, TouchableOpacity, Linking, ActivityIndicator } from 'react-native';
+import remoteConfig from '@react-native-firebase/remote-config';
+import { useSelector } from 'react-redux';
+
+type HomeSectionConfig = {
+  id: 'hero' | 'seminar_registration' | 'course_crousel' | 'workshop_registration' | 'prev_workhsop_carousel';
+  enable: boolean;
+  priority: number;
+};
 
 export default function FeaturedScreen() {
   const { colorScheme } = useColorScheme();
+  const [sections, setSections] = useState<HomeSectionConfig[]>([]);
+  const [loading, setLoading] = useState(true);
+  const user = useSelector((state: any) => state.auth.user);
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        // Set fetch interval to 0 for development so changes show up instantly
+        await remoteConfig().setConfigSettings({
+          minimumFetchIntervalMillis: 0,
+        });
+
+        await remoteConfig().setDefaults({
+          featured_section: JSON.stringify({ homeSection: [] })
+        });
+        await remoteConfig().fetchAndActivate();
+        
+        const featuredSectionStr = remoteConfig().getValue('featured_section').asString();
+        if (featuredSectionStr) {
+          const parsed = JSON.parse(featuredSectionStr);
+          if (parsed.homeSection && Array.isArray(parsed.homeSection)) {
+            // Filter enabled and sort by priority
+            const sortedSections = parsed.homeSection
+              .filter((sec: HomeSectionConfig) => sec.enable)
+              .sort((a: HomeSectionConfig, b: HomeSectionConfig) => a.priority - b.priority);
+            setSections(sortedSections);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching remote config:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchConfig();
+  }, []);
 
   const handleCoursePress = (course: any) => {
     router.push(course.slug);
   };
 
+  const renderSection = (sectionId: string) => {
+    switch (sectionId) {
+      case 'hero':
+        return (
+          <View key={sectionId} className="flex-row gap-2 px-4 mb-12">
+            <IconUserCircle size={52} strokeWidth={1} color={'#444'} />
+            <View>
+              <Text className="text-xl font-medium">Welcome, {user?.name || 'User'}</Text>
+              <Text>{user?.designation || 'Student'}</Text>
+            </View>
+          </View>
+        );
+      case 'seminar_registration':
+        return (
+          <TouchableOpacity
+            key={sectionId}
+            activeOpacity={0.8}
+            className="mb-12"
+            onPress={() => Linking.openURL('https://www.rhhealthcaresimulation.com/courses')}>
+            <AspectRatio className="w-full" ratio={16 / 9}>
+              <Image
+                source={{
+                  uri: 'https://d2c3lsl35lix55.cloudfront.net/website-image/Registration+Page.png',
+                }}
+                className="h-full w-full"
+              />
+            </AspectRatio>
+          </TouchableOpacity>
+        );
+      case 'course_crousel':
+        return <CourseCardsHorizontal key={sectionId} onCoursePress={handleCoursePress} title="Popular for Nursing/Paramedic" />;
+      case 'workshop_registration':
+        return (
+          <TouchableOpacity
+            key={sectionId}
+            activeOpacity={0.8}
+            className="mb-12"
+            onPress={() => Linking.openURL('https://www.rhhealthcaresimulation.com/courses')}>
+            <AspectRatio className="w-full" ratio={16 / 9}>
+              <Image
+                source={{
+                  uri: 'https://d2c3lsl35lix55.cloudfront.net/website-image/Registration+Page.png',
+                }}
+                className="h-full w-full"
+              />
+            </AspectRatio>
+          </TouchableOpacity>
+        );
+      case 'prev_workhsop_carousel':
+        return <CourseCardsHorizontal key={sectionId} onCoursePress={handleCoursePress} title="Previous Workshops" />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <View className="flex-1">
       <ScrollView className="flex-1" contentContainerClassName="py-20">
-        <View className="flex-row gap-2 px-4">
-          <IconUserCircle size={52} strokeWidth={1} color={'#444'} />
+        {loading ? (
+          <ActivityIndicator size="large" className="mt-10" />
+        ) : sections.length > 0 ? (
+          sections.map(sec => renderSection(sec.id))
+        ) : (
           <View>
-            <Text className="text-xl font-medium">Welcome, Ashish Bishnoi</Text>
-            <Text>Student</Text>
+            {/* Fallback layout if config not present */}
+            {renderSection('hero')}
+            {renderSection('seminar_registration')}
+            {renderSection('course_crousel')}
+            {renderSection('workshop_registration')}
+            {renderSection('prev_workhsop_carousel')}
           </View>
-        </View>
-
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={() => Linking.openURL('https://www.rhhealthcaresimulation.com/courses')}>
-          <AspectRatio className="mt-12 w-full" ratio={16 / 9}>
-            <Image
-              source={{
-                uri: 'https://d2c3lsl35lix55.cloudfront.net/website-image/Registration+Page.png',
-              }}
-              className="h-full w-full"
-            />
-          </AspectRatio>
-        </TouchableOpacity>
-
-        <CourseCardsHorizontal onCoursePress={handleCoursePress} />
-
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={() => Linking.openURL('https://www.rhhealthcaresimulation.com/courses')}>
-          <AspectRatio className="mt-12 w-full" ratio={16 / 9}>
-            <Image
-              source={{
-                uri: 'https://d2c3lsl35lix55.cloudfront.net/website-image/Registration+Page.png',
-              }}
-              className="h-full w-full"
-            />
-          </AspectRatio>
-        </TouchableOpacity>
-
-        <CourseCardsHorizontal onCoursePress={handleCoursePress} />
+        )}
       </ScrollView>
     </View>
   );
 }
 
-function CourseCardsHorizontal({ onCoursePress }: { onCoursePress: (course: any) => void }) {
+function CourseCardsHorizontal({ onCoursePress, title }: { onCoursePress: (course: any) => void, title?: string }) {
   const CardDetailIcon = ({
     IconComponent,
     label,
@@ -76,8 +153,8 @@ function CourseCardsHorizontal({ onCoursePress }: { onCoursePress: (course: any)
     );
   };
   return (
-    <View>
-      <Text className="mt-12 px-4 text-xl font-semibold">Popular for Nursing/Paramedic</Text>
+    <View className="mb-12">
+      {title && <Text className="px-4 text-xl font-semibold">{title}</Text>}
       <ScrollView
         horizontal
         className="mt-3 pl-4"

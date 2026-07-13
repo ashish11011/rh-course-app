@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import {
   View,
-  KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
   Alert,
-  ScrollView,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Text } from '@/components/ui/text';
 import { Input } from '@/components/ui/input';
 import { router } from 'expo-router';
@@ -16,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function SignupScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -33,15 +33,12 @@ export default function SignupScreen() {
 
     setLoading(true);
     try {
-      // Mock API call - Replace with your actual backend endpoint
-      // const response = await api.post('/auth/signup', { name, email, password });
-
-      // Simulate network request
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await api.post('/api/auth/mobile/signup', { name, email, password, phone });
 
       // Proceed to OTP verification screen
       router.push({ pathname: '/(auth)/verify-otp', params: { email } });
     } catch (error: any) {
+      console.log(error);
       Alert.alert('Signup Failed', error?.response?.data?.message || 'Something went wrong');
     } finally {
       setLoading(false);
@@ -50,11 +47,16 @@ export default function SignupScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-950">
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1">
-        <ScrollView className="flex-1 px-6" contentContainerClassName="py-12">
-          <View className="mb-10">
+      <KeyboardAwareScrollView 
+        className="flex-1 px-6" 
+        contentContainerClassName="pt-12 pb-40 flex-grow"
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        enableOnAndroid={true}
+        extraScrollHeight={120}
+        extraHeight={120}
+      >
+        <View className="mb-10">
             <Text className="text-3xl font-bold dark:text-white">Create Account</Text>
             <Text className="mt-2 text-gray-500 dark:text-gray-400">Sign up to get started</Text>
           </View>
@@ -67,6 +69,12 @@ export default function SignupScreen() {
               onChangeText={setEmail}
               autoCapitalize="none"
               keyboardType="email-address"
+            />
+            <Input
+              placeholder="Phone (Optional)"
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
             />
             <Input
               placeholder="Password"
@@ -98,8 +106,7 @@ export default function SignupScreen() {
               <Text className="font-semibold text-blue-600">Sign In</Text>
             </TouchableOpacity>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }

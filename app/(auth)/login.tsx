@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, KeyboardAvoidingView, Platform, TouchableOpacity, Alert } from 'react-native';
+import { View, Platform, TouchableOpacity, Alert } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Text } from '@/components/ui/text';
 import { Input } from '@/components/ui/input';
 import { router } from 'expo-router';
@@ -26,19 +27,27 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      // Mock API call - Replace with your actual backend endpoint
-      // const response = await api.post('/auth/login', { email, password });
-
-      // Simulate network request
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      const mockToken = 'mock_jwt_token_12345';
+      const response = await api.post('/api/auth/mobile/login', { email, password });
+      
+      const { IdToken, AccessToken, RefreshToken } = response.data.tokens;
       const mockUser = { id: 1, email };
 
       // Save token securely
-      await SecureStore.setItemAsync('userToken', mockToken);
+      await SecureStore.setItemAsync('userToken', IdToken);
+      if (RefreshToken) {
+        await SecureStore.setItemAsync('refreshToken', RefreshToken);
+      }
+      
+      dispatch(setCredentials({ token: IdToken }));
 
-      dispatch(setCredentials({ token: mockToken, user: mockUser }));
+      try {
+        const userRes = await api.get('/api/auth/mobile/user');
+        if (userRes.data?.user) {
+          dispatch(setCredentials({ token: IdToken, user: userRes.data.user }));
+        }
+      } catch (error) {
+        console.error('Failed to fetch user after login', error);
+      }
 
       // Navigate to tabs
       router.replace('/(tabs)');
@@ -51,9 +60,15 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-950">
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1 justify-center px-6">
+      <KeyboardAwareScrollView 
+        className="flex-1 px-6" 
+        contentContainerClassName="flex-grow justify-center pt-12 pb-40"
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        enableOnAndroid={true}
+        extraScrollHeight={120}
+        extraHeight={120}
+      >
         <View className="mb-10">
           <Text className="text-3xl font-bold dark:text-white">Welcome Back</Text>
           <Text className="mt-2 text-gray-500 dark:text-gray-400">Sign in to continue</Text>
@@ -97,7 +112,7 @@ export default function LoginScreen() {
             <Text className="font-semibold text-blue-600">Sign Up</Text>
           </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
+        </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }
