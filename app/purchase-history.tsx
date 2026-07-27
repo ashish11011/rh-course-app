@@ -81,7 +81,7 @@ export default function PurchaseHistoryScreen() {
                   <View className="h-6 w-24 rounded bg-slate-200 dark:bg-neutral-800" />
                 </View>
 
-                <View className="gap-3 mt-4">
+                <View className="mt-4 gap-3">
                   <View className="flex-row justify-between">
                     <View className="h-4 w-16 rounded bg-slate-200 dark:bg-neutral-800" />
                     <View className="h-4 w-1/2 rounded bg-slate-200 dark:bg-neutral-800" />
@@ -122,9 +122,9 @@ export default function PurchaseHistoryScreen() {
               : 'N/A';
 
             // Assuming amount is in lowest denomination (e.g. paise), divide by 100
-            const displayAmount = (purchase.amount / 100).toLocaleString('en-IN', {
+            const displayAmount = purchase.amount.toLocaleString('en-IN', {
               style: 'currency',
-              currency: purchase.currency || 'INR',
+              currency: 'INR',
               minimumFractionDigits: 2,
             });
 

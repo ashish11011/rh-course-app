@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { store } from '@/store';
 import { logout } from '@/store/authSlice';
 import { Platform } from 'react-native';
 
@@ -18,6 +17,7 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
+    const { store } = require('@/store');
     const token = store.getState().auth.token;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -34,6 +34,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 401) {
       // Auto logout if 401 response returned from api
+      const { store } = require('@/store');
       store.dispatch(logout());
     }
     return Promise.reject(error);

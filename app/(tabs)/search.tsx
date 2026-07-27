@@ -3,10 +3,12 @@ import { View, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Input } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
-import { COURSE_DATA } from '@/const/courseData';
 import { router } from 'expo-router';
 import { IconCertificate, IconClock } from '@tabler/icons-react-native';
 import { MonitorPlay, LucideIcon } from 'lucide-react-native';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import { PublicCourse } from '@/store/coursesSlice';
 
 const CardDetailIcon = ({
   IconComponent,
@@ -18,23 +20,24 @@ const CardDetailIcon = ({
   return (
     <View className="mt-2 flex-row items-center gap-1">
       <IconComponent color={'#666'} size={18} />
-      <Text className="text-sm">{label}</Text>
+      <Text className="text-sm dark:text-gray-400">{label}</Text>
     </View>
   );
 };
 
 export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState('');
+  const { allCourses, allCoursesLoading } = useSelector((state: RootState) => state.courses);
 
   const filteredCourses = useMemo(() => {
-    if (!searchQuery.trim()) return COURSE_DATA;
-    return COURSE_DATA.filter((course) =>
-      course.courseTitle.toLowerCase().includes(searchQuery.toLowerCase())
+    if (!searchQuery.trim()) return allCourses;
+    return allCourses.filter((course) =>
+      course.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [searchQuery]);
+  }, [searchQuery, allCourses]);
 
-  const handleCoursePress = (course: any) => {
-    router.push(course.slug);
+  const handleCoursePress = (course: PublicCourse) => {
+    router.push(course.slug as any);
   };
 
   return (
@@ -50,7 +53,20 @@ export default function SearchScreen() {
         </View>
 
         <ScrollView className="flex-1 px-6" contentContainerClassName="pb-20">
-          {filteredCourses.length > 0 ? (
+          {allCoursesLoading ? (
+            <View className="gap-6">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <View key={index} className="mb-4 w-full">
+                  <View className="h-48 w-full rounded-lg bg-gray-200 dark:bg-neutral-800" />
+                  <View className="mt-3 h-5 w-3/4 rounded bg-gray-200 dark:bg-neutral-800" />
+                  <View className="mt-2 flex-row gap-6">
+                    <View className="h-4 w-12 rounded bg-gray-200 dark:bg-neutral-800" />
+                    <View className="h-4 w-16 rounded bg-gray-200 dark:bg-neutral-800" />
+                  </View>
+                </View>
+              ))}
+            </View>
+          ) : filteredCourses.length > 0 ? (
             <View className="gap-6">
               {filteredCourses.map((course) => (
                 <TouchableOpacity
@@ -59,16 +75,16 @@ export default function SearchScreen() {
                   activeOpacity={0.8}
                   onPress={() => handleCoursePress(course)}>
                   <Image
-                    source={{ uri: course.bannerImage }}
+                    source={{ uri: course.bannerImageUrl.startsWith('http') ? course.bannerImageUrl : `https://d12z58c4k5tsm1.cloudfront.net/${course.bannerImageUrl}` }}
                     className="h-48 w-full overflow-hidden rounded-lg object-cover"
                     resizeMode="cover"
                   />
                   <Text className="mt-3 text-lg font-medium leading-6 dark:text-white">
-                    {course.courseTitle}
+                    {course.title}
                   </Text>
                   <View className="flex-row flex-wrap gap-x-6 gap-y-2">
-                    <CardDetailIcon IconComponent={IconClock} label={course.courseHour} />
-                    <CardDetailIcon IconComponent={MonitorPlay} label={course.numberOfLacture} />
+                    <CardDetailIcon IconComponent={IconClock} label={`${course.courseHours} Hrs`} />
+                    <CardDetailIcon IconComponent={MonitorPlay} label={course.totalLectures} />
                     <CardDetailIcon IconComponent={IconCertificate} label={'Certificate'} />
                   </View>
                 </TouchableOpacity>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Image, Linking, ScrollView } from 'react-native';
-import { useLocalSearchParams, Stack } from 'expo-router';
+import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,8 +12,9 @@ import {
 import { LucideIcon, MonitorPlay } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { cn } from '@/lib/utils';
-import { COURSE_DATA } from '@/const/courseData';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
 
 const CourseDetailIcon = ({
   IconComponent,
@@ -40,10 +41,14 @@ export default function CourseScreen() {
   const { slug } = useLocalSearchParams();
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const router = useRouter();
 
-  // Slug might not contain '/courses/' depending on how it's routed,
-  // but COURSE_DATA has slugs like '/courses/nrp-for-nurses'
-  const course = COURSE_DATA.find((c) => c.slug === `/courses/${slug}` || c.slug === slug);
+  const { courses, allCourses } = useSelector((state: RootState) => state.courses);
+
+  const course = allCourses.find((c) => c.slug === `/courses/${slug}` || c.slug === slug);
+  const isEnrolled = courses.some(
+    (c) => c.slug === slug || c.slug === `/courses/${slug}` || c.slug === course?.slug
+  );
 
   if (!course) {
     return (
@@ -57,25 +62,29 @@ export default function CourseScreen() {
 
   return (
     <SafeAreaView className={`flex-1 ${isDark ? 'bg-neutral-950' : 'bg-white'}`} edges={['bottom']}>
-      <Stack.Screen options={{ title: course.courseTitle, headerBackTitle: 'Back' }} />
+      <Stack.Screen options={{ title: course.title, headerBackTitle: 'Back' }} />
       <ScrollView className="flex-1">
         <Image
-          source={{ uri: course.bannerImage }}
+          source={{
+            uri: course.bannerImageUrl.startsWith('http')
+              ? course.bannerImageUrl
+              : `https://d12z58c4k5tsm1.cloudfront.net/${course.bannerImageUrl}`,
+          }}
           className="h-52 w-full object-cover"
           resizeMode="cover"
         />
         <View className="flex-1 px-4 py-6">
-          <Text className="text-xl font-semibold">{course.courseTitle}</Text>
+          <Text className="text-xl font-semibold">{course.title}</Text>
 
           <View className="mt-6 w-full flex-col gap-2">
             <CourseDetailIcon
               IconComponent={IconClock}
-              label={course.courseHour + ' Hrs'}
+              label={course.courseHours + ' Hrs'}
               isDark={isDark}
             />
             <CourseDetailIcon
               IconComponent={MonitorPlay}
-              label={course.numberOfLacture + ' Lactures'}
+              label={course.totalLectures + ' Lactures'}
               isDark={isDark}
             />
             <CourseDetailIcon
@@ -89,7 +98,7 @@ export default function CourseScreen() {
           <View className="mt-10">
             <SectionHeading title="What you will learn" />
             <View className="mt-3 flex-col gap-3">
-              {course.whatYoullLearn.map((txt: string) => (
+              {course.whatYouWillLearn.map((txt: string) => (
                 <View key={txt} className="flex-row gap-2 pr-4">
                   <IconCheck color={isDark ? '#fff' : '#000'} size={18} />
                   <Text
@@ -102,7 +111,9 @@ export default function CourseScreen() {
           </View>
 
           <SectionHeading className="mt-10" title="Description" />
-          <Text className="mt-2 text-sm leading-6">{course.courseOverview}</Text>
+          <Text className="mt-2 text-sm leading-6">
+            {course.courseOverview || course.description}
+          </Text>
         </View>
       </ScrollView>
 
@@ -110,8 +121,14 @@ export default function CourseScreen() {
       <View className="border-t border-neutral-100 bg-white px-4 py-4 dark:border-neutral-900 dark:bg-neutral-950">
         <Button
           className="active:bg-neutral-700 dark:bg-green-700"
-          onPress={() => Linking.openURL('https://www.rhhealthcaresimulation.com/courses')}>
-          <Text className="dark:text-neutral-200">View new course</Text>
+          onPress={() =>
+            isEnrolled
+              ? router.push('/(tabs)/my-courses')
+              : Linking.openURL('https://www.rhhealthcaresimulation.com/courses')
+          }>
+          <Text className="dark:text-neutral-200">
+            {isEnrolled ? 'Go to My Courses' : 'Buy now'}
+          </Text>
           <IconExternalLink size={18} color={isDark ? '#e5e5e5' : '#fff'} />
         </Button>
       </View>

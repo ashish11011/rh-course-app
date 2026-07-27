@@ -4,8 +4,10 @@ import { NAV_THEME } from '@/lib/theme';
 import { Icon } from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
 import { SunIcon, MoonStarIcon } from 'lucide-react-native';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState, AppDispatch } from '@/store';
+import { fetchPurchasedCourses, fetchAllCourses } from '@/store/coursesSlice';
+import { useEffect } from 'react';
 import {
   IconBook,
   IconBookFilled,
@@ -39,6 +41,15 @@ function ThemeToggle() {
 export default function TabLayout() {
   const { colorScheme } = useColorScheme();
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const dispatch = useDispatch<AppDispatch>();
+
+  useEffect(() => {
+    dispatch(fetchAllCourses());
+    if (isAuthenticated) {
+      dispatch(fetchPurchasedCourses());
+    }
+  }, [isAuthenticated, dispatch]);
+
 
   const requireAuth = (e: any) => {
     if (!isAuthenticated) {

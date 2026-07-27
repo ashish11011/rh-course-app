@@ -16,6 +16,8 @@ import api from '@/lib/api';
 import { useEffect, useState } from 'react';
 import messaging from '@react-native-firebase/messaging';
 import { requestUserPermission, getFCMToken, setupNotificationListeners } from '@/lib/notifications';
+import { useNetInfo } from '@react-native-community/netinfo';
+import OfflineScreen from '@/components/OfflineScreen';
 
 // Register background handler early
 messaging().setBackgroundMessageHandler(async remoteMessage => {
@@ -30,6 +32,7 @@ function AppContent() {
   const { colorScheme } = useColorScheme();
   const dispatch = useDispatch();
   const [isReady, setIsReady] = useState(false);
+  const netInfo = useNetInfo();
 
   useEffect(() => {
     const loadToken = async () => {
@@ -64,6 +67,10 @@ function AppContent() {
 
   if (!isReady) {
     return null; // Or a splash screen
+  }
+
+  if (netInfo.isConnected === false) {
+    return <OfflineScreen />;
   }
 
   return (

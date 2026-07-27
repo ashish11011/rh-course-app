@@ -27,6 +27,7 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="my-app"/>
         <data android:scheme="exp+my-app"/>
+        <data android:scheme="exp+rh-healthcare"/>
       </intent-filter>
     </activity>
   </application>

@@ -21,6 +21,7 @@ import { IconUserFilled } from '@tabler/icons-react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '@/store/authSlice';
 import * as SecureStore from 'expo-secure-store';
+import { RootState } from '@/store';
 
 export default function AccountScreen() {
   const { colorScheme } = useColorScheme();
@@ -28,7 +29,8 @@ export default function AccountScreen() {
   const router = useRouter();
 
   const dispatch = useDispatch();
-  const user = useSelector((state: any) => state.auth.user);
+  const user = useSelector((state: RootState) => state.auth.user);
+  const courses = useSelector((state: RootState) => state.courses.courses);
 
   const handlePress = async (link: any) => {
     if (link.name === 'Share this app') {
@@ -43,6 +45,21 @@ export default function AccountScreen() {
       router.push(link.href as any);
     }
   };
+
+  const accountLinksWithCourses = ACCOUNT_LINKS.map(group => {
+    if (group.title === 'Learning') {
+      return {
+        ...group,
+        links: group.links.map(link => {
+          if (link.name === 'Course' && courses.length > 0) {
+            return { ...link, name: `Course (${courses.length})`, href: '/(tabs)/my-courses' };
+          }
+          return link;
+        })
+      };
+    }
+    return group;
+  });
 
   return (
     <ScrollView className="flex-1 bg-slate-50 dark:bg-neutral-950">
@@ -61,7 +78,7 @@ export default function AccountScreen() {
           <View className="h-12"></View>
         </View>
         <View className="my-12 flex w-full flex-col gap-5 px-5">
-          {ACCOUNT_LINKS.map(({ title, links }) => {
+          {accountLinksWithCourses.map(({ title, links }) => {
             return (
               <Card
                 key={title}
