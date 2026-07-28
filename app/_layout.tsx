@@ -9,6 +9,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
 import { Provider, useDispatch } from 'react-redux';
+import { Platform } from 'react-native';
 import { store } from '@/store';
 import { setCredentials } from '@/store/authSlice';
 import * as SecureStore from 'expo-secure-store';
@@ -20,9 +21,11 @@ import { useNetInfo } from '@react-native-community/netinfo';
 import OfflineScreen from '@/components/OfflineScreen';
 
 // Register background handler early
-messaging().setBackgroundMessageHandler(async remoteMessage => {
-  console.log('Message handled in the background!', remoteMessage);
-});
+if (Platform.OS !== 'web') {
+  messaging().setBackgroundMessageHandler(async remoteMessage => {
+    console.log('Message handled in the background!', remoteMessage);
+  });
+}
 
 export {
   ErrorBoundary,
@@ -37,8 +40,10 @@ function AppContent() {
   useEffect(() => {
     const loadToken = async () => {
       try {
-        await requestUserPermission();
-        await getFCMToken();
+        if (Platform.OS !== 'web') {
+          await requestUserPermission();
+          await getFCMToken();
+        }
         const token = await SecureStore.getItemAsync('userToken');
         if (token) {
           dispatch(setCredentials({ token }));
@@ -59,9 +64,9 @@ function AppContent() {
     };
     loadToken();
 
-    const unsubscribe = setupNotificationListeners();
+    const unsubscribe = Platform.OS !== 'web' ? setupNotificationListeners() : undefined;
     return () => {
-      unsubscribe();
+      unsubscribe?.();
     };
   }, [dispatch]);
 

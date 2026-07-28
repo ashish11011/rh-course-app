@@ -46,16 +46,16 @@ export default function AccountScreen() {
     }
   };
 
-  const accountLinksWithCourses = ACCOUNT_LINKS.map(group => {
+  const accountLinksWithCourses = ACCOUNT_LINKS.map((group) => {
     if (group.title === 'Learning') {
       return {
         ...group,
-        links: group.links.map(link => {
+        links: group.links.map((link) => {
           if (link.name === 'Course' && courses.length > 0) {
             return { ...link, name: `Course (${courses.length})`, href: '/(tabs)/my-courses' };
           }
           return link;
-        })
+        }),
       };
     }
     return group;
@@ -73,8 +73,12 @@ export default function AccountScreen() {
             {/* <Text className="text-4xl font-bold text-gray-600">JD</Text> */}
             <IconUserFilled size={24} color={isDark ? '#e2e8f0' : '#000'} />
           </View>
-          <Text className="mb-1 text-2xl font-bold dark:text-white">{user?.name || 'Your account'}</Text>
-          <Text className="text-sm text-gray-500 dark:text-gray-400">{user?.email || 'user@example.com'}</Text>
+          <Text className="mb-1 text-2xl font-bold dark:text-white">
+            {user?.name || 'Your account'}
+          </Text>
+          <Text className="text-sm text-gray-500 dark:text-gray-400">
+            {user?.email || 'user@example.com'}
+          </Text>
           <View className="h-12"></View>
         </View>
         <View className="my-12 flex w-full flex-col gap-5 px-5">

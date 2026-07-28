@@ -50,6 +50,7 @@
           }
         }
       ],
+      "./plugins/with-gradle-build-settings",
       "expo-video"
     ],
     "experiments": {
@@ -61,6 +62,12 @@
         "projectId": "b286f731-0bbb-4677-ae0a-40e6701107fe"
       }
     },
-    "owner": "codeframe"
+    "owner": "codeframe",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/b286f731-0bbb-4677-ae0a-40e6701107fe"
+    }
   }
 }
