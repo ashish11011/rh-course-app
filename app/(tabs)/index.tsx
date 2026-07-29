@@ -12,13 +12,13 @@ import {
   ScrollView,
   TouchableOpacity,
   Linking,
-  ActivityIndicator,
   RefreshControl,
 } from 'react-native';
 import remoteConfig from '@react-native-firebase/remote-config';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '@/store';
 import { PublicCourse, fetchAllCourses } from '@/store/coursesSlice';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type HomeSectionConfig = {
   id:
@@ -188,27 +188,27 @@ const HomeSkeleton = () => {
     <View className="mt-4 gap-12 px-4">
       {/* Hero skeleton */}
       <View className="flex-row gap-4">
-        <View className="h-14 w-14 rounded-full bg-gray-200 dark:bg-neutral-800" />
+        <Skeleton className="h-14 w-14 rounded-full bg-gray-200 dark:bg-neutral-800" />
         <View className="justify-center gap-2">
-          <View className="h-6 w-48 rounded bg-gray-200 dark:bg-neutral-800" />
-          <View className="h-4 w-24 rounded bg-gray-200 dark:bg-neutral-800" />
+          <Skeleton className="h-6 w-48 rounded bg-gray-200 dark:bg-neutral-800" />
+          <Skeleton className="h-4 w-24 rounded bg-gray-200 dark:bg-neutral-800" />
         </View>
       </View>
       {/* Banner skeleton */}
-      <View className="aspect-[16/9] w-full rounded-lg bg-gray-200 dark:bg-neutral-800" />
+      <Skeleton className="aspect-[16/9] w-full rounded-lg bg-gray-200 dark:bg-neutral-800" />
       {/* Course Carousel skeleton */}
       <View>
-        <View className="mb-4 h-6 w-56 rounded bg-gray-200 dark:bg-neutral-800" />
+        <Skeleton className="mb-4 h-6 w-56 rounded bg-gray-200 dark:bg-neutral-800" />
         <View className="flex-row gap-4">
           <View className="w-[70vw]">
-            <View className="h-40 w-full rounded-lg bg-gray-200 dark:bg-neutral-800" />
-            <View className="mt-3 h-5 w-3/4 rounded bg-gray-200 dark:bg-neutral-800" />
-            <View className="mt-2 h-4 w-1/2 rounded bg-gray-200 dark:bg-neutral-800" />
+            <Skeleton className="h-40 w-full rounded-lg bg-gray-200 dark:bg-neutral-800" />
+            <Skeleton className="mt-3 h-5 w-3/4 rounded bg-gray-200 dark:bg-neutral-800" />
+            <Skeleton className="mt-2 h-4 w-1/2 rounded bg-gray-200 dark:bg-neutral-800" />
           </View>
           <View className="w-[70vw]">
-            <View className="h-40 w-full rounded-lg bg-gray-200 dark:bg-neutral-800" />
-            <View className="mt-3 h-5 w-3/4 rounded bg-gray-200 dark:bg-neutral-800" />
-            <View className="mt-2 h-4 w-1/2 rounded bg-gray-200 dark:bg-neutral-800" />
+            <Skeleton className="h-40 w-full rounded-lg bg-gray-200 dark:bg-neutral-800" />
+            <Skeleton className="mt-3 h-5 w-3/4 rounded bg-gray-200 dark:bg-neutral-800" />
+            <Skeleton className="mt-2 h-4 w-1/2 rounded bg-gray-200 dark:bg-neutral-800" />
           </View>
         </View>
       </View>
@@ -251,11 +251,11 @@ function CourseCardsHorizontal({
           ? // Skeleton Loader
             Array.from({ length: 3 }).map((_, index) => (
               <View key={index} className="w-[70vw]">
-                <View className="mx-auto h-40 w-full rounded-lg bg-gray-200 dark:bg-neutral-800" />
-                <View className="mt-3 h-5 w-3/4 rounded bg-gray-200 dark:bg-neutral-800" />
+                <Skeleton className="mx-auto h-40 w-full rounded-lg bg-gray-200 dark:bg-neutral-800" />
+                <Skeleton className="mt-3 h-5 w-3/4 rounded bg-gray-200 dark:bg-neutral-800" />
                 <View className="mt-2 flex-row gap-6">
-                  <View className="h-4 w-12 rounded bg-gray-200 dark:bg-neutral-800" />
-                  <View className="h-4 w-16 rounded bg-gray-200 dark:bg-neutral-800" />
+                  <Skeleton className="h-4 w-12 rounded bg-gray-200 dark:bg-neutral-800" />
+                  <Skeleton className="h-4 w-16 rounded bg-gray-200 dark:bg-neutral-800" />
                 </View>
               </View>
             ))

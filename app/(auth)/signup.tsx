@@ -10,6 +10,7 @@ import { Text } from '@/components/ui/text';
 import { Input } from '@/components/ui/input';
 import { router } from 'expo-router';
 import api from '@/lib/api';
+import { tryCatch } from '@/lib/apiUtils';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SignupScreen() {
@@ -33,13 +34,22 @@ export default function SignupScreen() {
 
     setLoading(true);
     try {
-      await api.post('/api/auth/mobile/signup', { name, email, password, phone });
+      const { error, rawError } = await tryCatch(
+        () => api.post('/api/auth/mobile/signup', { name, email, password, phone }),
+        'Signup failed'
+      );
+
+      if (error) {
+        console.log(rawError);
+        Alert.alert('Signup Failed', error);
+        return;
+      }
 
       // Proceed to OTP verification screen
       router.push({ pathname: '/(auth)/verify-otp', params: { email } });
-    } catch (error: any) {
+    } catch (error) {
       console.log(error);
-      Alert.alert('Signup Failed', error?.response?.data?.message || 'Something went wrong');
+      Alert.alert('Signup Failed', 'Something went wrong');
     } finally {
       setLoading(false);
     }

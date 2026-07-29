@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Image, ScrollView, TouchableOpacity, ActivityIndicator, Modal, Platform, StyleSheet, Linking } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Image, ScrollView, TouchableOpacity, ActivityIndicator, Modal, Platform, StyleSheet } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { Text } from '@/components/ui/text';
 import { MonitorPlay, PlayCircle, Clock, Award, FileText } from 'lucide-react-native';
@@ -9,6 +9,44 @@ import api from '@/lib/api';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import * as NavigationBar from 'expo-navigation-bar';
+import { tryCatch } from '@/lib/apiUtils';
+import { Skeleton } from '@/components/ui/skeleton';
+import Pdf from 'react-native-pdf';
+
+type ActivePdf = {
+  title: string;
+  url: string;
+};
+
+const MEDIA_BASE_URL = 'https://d2c3lsl35lix55.cloudfront.net';
+
+function normalizeRemoteUrl(url: string) {
+  try {
+    const parsedUrl = new URL(url);
+    parsedUrl.pathname = parsedUrl.pathname
+      .split('/')
+      .map((segment) => encodeURIComponent(decodeURIComponent(segment)))
+      .join('/');
+    return parsedUrl.toString();
+  } catch {
+    return encodeURI(url);
+  }
+}
+
+function buildMediaUrl(mediaUrl: string) {
+  const trimmedUrl = mediaUrl.trim();
+
+  if (/^https?:\/\//i.test(trimmedUrl)) {
+    return normalizeRemoteUrl(trimmedUrl);
+  }
+
+  if (trimmedUrl.startsWith('/api/')) {
+    const baseUrl = api.defaults.baseURL || '';
+    return normalizeRemoteUrl(`${baseUrl}${trimmedUrl}`);
+  }
+
+  return normalizeRemoteUrl(`${MEDIA_BASE_URL}/${trimmedUrl.replace(/^\/+/, '')}`);
+}
 
 export default function EnrolledCourseScreen() {
   const { id } = useLocalSearchParams();
@@ -21,6 +59,9 @@ export default function EnrolledCourseScreen() {
 
   // Video Player state
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
+  const [activePdf, setActivePdf] = useState<ActivePdf | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   const player = useVideoPlayer(activeVideoUrl, (player) => {
     player.loop = false;
@@ -47,16 +88,26 @@ export default function EnrolledCourseScreen() {
     let isMounted = true;
     const fetchCourseData = async () => {
       try {
-        const response = await api.get(`/api/auth/mobile/courses/${id}`);
+        const { data: response, error } = await tryCatch(
+          () => api.get(`/api/auth/mobile/courses/${id}`),
+          'An error occurred.'
+        );
         if (!isMounted) return;
+
+        if (error || !response) {
+          setError(error || 'An error occurred.');
+          return;
+        }
+
         if (response.data.success) {
           setCourseData(response.data);
         } else {
           setError('Failed to fetch course data.');
         }
-      } catch (err: any) {
+      } catch (err) {
         if (!isMounted) return;
-        setError(err.response?.data?.error || err.message || 'An error occurred.');
+        console.error(err);
+        setError('An error occurred.');
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -66,21 +117,24 @@ export default function EnrolledCourseScreen() {
     return () => { isMounted = false; };
   }, [id]);
 
-  const handleItemPress = async (item: any) => {
+  const handleItemPress = (item: any) => {
     if (!item.mediaUrl) return;
 
-    let finalUrl = item.mediaUrl;
-    if (!finalUrl.startsWith('http')) {
-      finalUrl = `https://d2c3lsl35lix55.cloudfront.net/${finalUrl}`;
-    }
+    const finalUrl = buildMediaUrl(item.mediaUrl);
 
-    const isMp4 = item.mediaType === 'mp4' || item.mediaType === 'video' || finalUrl.toLowerCase().endsWith('.mp4');
-    const isPdf = item.mediaType === 'pdf' || finalUrl.toLowerCase().endsWith('.pdf');
+    const mediaPath = finalUrl.split('?')[0].toLowerCase();
+    const isMp4 = item.mediaType === 'mp4' || item.mediaType === 'video' || mediaPath.endsWith('.mp4');
+    const isPdf = item.mediaType === 'pdf' || mediaPath.endsWith('.pdf');
 
     if (isMp4) {
       setActiveVideoUrl(finalUrl);
     } else if (isPdf) {
-      await Linking.openURL(finalUrl);
+      setPdfError(null);
+      setPdfLoading(true);
+      setActivePdf({
+        title: item.title || 'Course PDF',
+        url: finalUrl,
+      });
     }
   };
 
@@ -88,12 +142,18 @@ export default function EnrolledCourseScreen() {
     setActiveVideoUrl(null);
   };
 
+  const closePdf = () => {
+    setActivePdf(null);
+    setPdfError(null);
+    setPdfLoading(false);
+  };
+
   if (loading) {
     return (
-      <View className={`flex-1 items-center justify-center ${isDark ? 'bg-neutral-950' : 'bg-white'}`}>
-        <Stack.Screen options={{ title: 'Loading...', headerBackTitle: 'Back' }} />
-        <ActivityIndicator size="large" />
-      </View>
+      <SafeAreaView className={`flex-1 ${isDark ? 'bg-neutral-950' : 'bg-white'}`} edges={['bottom']}>
+        <Stack.Screen options={{ title: '', headerBackTitle: 'Back' }} />
+        <CourseDetailSkeleton />
+      </SafeAreaView>
     );
   }
 
@@ -190,6 +250,111 @@ export default function EnrolledCourseScreen() {
           )}
         </View>
       </Modal>
+
+      {/* Secure in-app PDF viewer */}
+      <Modal
+        visible={!!activePdf}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={closePdf}>
+        <SafeAreaView className={`flex-1 ${isDark ? 'bg-neutral-950' : 'bg-white'}`}>
+          <View className={`flex-row items-center justify-between border-b px-4 py-3 ${isDark ? 'border-neutral-800' : 'border-gray-200'}`}>
+            <Text numberOfLines={1} className="mr-3 flex-1 text-base font-semibold dark:text-white">
+              {activePdf?.title || 'Course PDF'}
+            </Text>
+            <TouchableOpacity
+              className="rounded-full bg-neutral-900 px-4 py-2 dark:bg-neutral-800"
+              activeOpacity={0.8}
+              onPress={closePdf}>
+              <Text className="text-sm font-semibold text-white">Close</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.pdfContainer}>
+            {activePdf && (
+              <Pdf
+                source={{ uri: activePdf.url, cache: true }}
+                trustAllCerts={false}
+                enablePaging={false}
+                enableRTL={false}
+                onLoadComplete={() => setPdfLoading(false)}
+                onError={(error) => {
+                  console.error('Failed to load PDF', error);
+                  setPdfLoading(false);
+                  setPdfError('Unable to load PDF. Please try again.');
+                }}
+                onPressLink={() => {}}
+                style={styles.pdf}
+              />
+            )}
+
+            {pdfLoading && (
+              <View style={[StyleSheet.absoluteFill, styles.pdfOverlay, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
+                <ActivityIndicator size="large" />
+                <Text className="mt-3 text-sm text-gray-500 dark:text-gray-400">Loading PDF...</Text>
+              </View>
+            )}
+
+            {pdfError && (
+              <View style={[StyleSheet.absoluteFill, styles.pdfOverlay, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
+                <Text className="px-6 text-center text-sm text-red-500">{pdfError}</Text>
+              </View>
+            )}
+          </View>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  pdfContainer: {
+    flex: 1,
+  },
+  pdf: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  pdfOverlay: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
+
+function CourseDetailSkeleton() {
+  return (
+    <ScrollView className="flex-1" contentContainerClassName="pb-10">
+      <Skeleton className="h-52 w-full bg-gray-200 dark:bg-neutral-800" />
+      <View className="flex-1 px-4 py-6">
+        <Skeleton className="h-7 w-11/12 rounded bg-gray-200 dark:bg-neutral-800" />
+        <Skeleton className="mt-3 h-4 w-full rounded bg-gray-200 dark:bg-neutral-800" />
+        <Skeleton className="mt-2 h-4 w-5/6 rounded bg-gray-200 dark:bg-neutral-800" />
+        <Skeleton className="mt-2 h-4 w-2/3 rounded bg-gray-200 dark:bg-neutral-800" />
+
+        <View className="mt-6 flex-row flex-wrap gap-x-6 gap-y-3">
+          <Skeleton className="h-5 w-20 rounded bg-gray-200 dark:bg-neutral-800" />
+          <Skeleton className="h-5 w-24 rounded bg-gray-200 dark:bg-neutral-800" />
+          <Skeleton className="h-5 w-24 rounded bg-gray-200 dark:bg-neutral-800" />
+        </View>
+
+        <View className="mt-8">
+          <Skeleton className="mb-4 h-6 w-40 rounded bg-gray-200 dark:bg-neutral-800" />
+          <View className="flex-col gap-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <View
+                key={index}
+                className="flex-row items-center rounded-xl bg-gray-50 p-4 dark:bg-neutral-900">
+                <Skeleton className="h-8 w-8 rounded bg-gray-200 dark:bg-neutral-800" />
+                <View className="ml-3 flex-1">
+                  <Skeleton className="h-5 w-4/5 rounded bg-gray-200 dark:bg-neutral-800" />
+                  <Skeleton className="mt-2 h-3 w-24 rounded bg-gray-200 dark:bg-neutral-800" />
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+      </View>
+    </ScrollView>
   );
 }

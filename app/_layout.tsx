@@ -14,11 +14,13 @@ import { store } from '@/store';
 import { setCredentials } from '@/store/authSlice';
 import * as SecureStore from 'expo-secure-store';
 import api from '@/lib/api';
+import { tryCatch } from '@/lib/apiUtils';
 import { useEffect, useState } from 'react';
 import messaging from '@react-native-firebase/messaging';
 import { requestUserPermission, getFCMToken, setupNotificationListeners } from '@/lib/notifications';
 import { useNetInfo } from '@react-native-community/netinfo';
 import OfflineScreen from '@/components/OfflineScreen';
+import * as ScreenCapture from 'expo-screen-capture';
 
 // Register background handler early
 if (Platform.OS !== 'web') {
@@ -38,6 +40,18 @@ function AppContent() {
   const netInfo = useNetInfo();
 
   useEffect(() => {
+    if (Platform.OS === 'web') {
+      return;
+    }
+
+    ScreenCapture.preventScreenCaptureAsync();
+
+    return () => {
+      ScreenCapture.allowScreenCaptureAsync();
+    };
+  }, []);
+
+  useEffect(() => {
     const loadToken = async () => {
       try {
         if (Platform.OS !== 'web') {
@@ -47,13 +61,15 @@ function AppContent() {
         const token = await SecureStore.getItemAsync('userToken');
         if (token) {
           dispatch(setCredentials({ token }));
-          try {
-            const userRes = await api.get('/api/auth/mobile/user');
-            if (userRes.data?.user) {
-              dispatch(setCredentials({ token, user: userRes.data.user }));
-            }
-          } catch (error) {
-            console.error('Failed to fetch user profile', error);
+          const { data: userRes, rawError } = await tryCatch(
+            () => api.get('/api/auth/mobile/user'),
+            'Failed to fetch user profile'
+          );
+          if (rawError) {
+            console.error('Failed to fetch user profile', rawError);
+          }
+          if (userRes?.data?.user) {
+            dispatch(setCredentials({ token, user: userRes.data.user }));
           }
         }
       } catch (e) {

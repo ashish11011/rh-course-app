@@ -5,6 +5,7 @@ import { Text } from '@/components/ui/text';
 import { Input } from '@/components/ui/input';
 import { router, useLocalSearchParams } from 'expo-router';
 import api from '@/lib/api';
+import { tryCatch } from '@/lib/apiUtils';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function VerifyOtpScreen() {
@@ -20,25 +21,39 @@ export default function VerifyOtpScreen() {
 
     setLoading(true);
     try {
-      await api.post('/api/auth/mobile/confirm', { email, code: otp });
+      const { error } = await tryCatch(
+        () => api.post('/api/auth/mobile/confirm', { email, code: otp }),
+        'Invalid code'
+      );
+
+      if (error) {
+        Alert.alert('Verification Failed', error);
+        return;
+      }
       
       Alert.alert('Success', 'Account verified successfully!', [
         { text: 'OK', onPress: () => router.replace('/(auth)/login') }
       ]);
-    } catch (error: any) {
-      Alert.alert('Verification Failed', error?.response?.data?.message || 'Invalid code');
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Verification Failed', 'Invalid code');
     } finally {
       setLoading(false);
     }
   };
 
   const handleResendCode = async () => {
-    try {
-      await api.post('/api/auth/mobile/resend-code', { email });
-      Alert.alert('Success', 'Verification code resent successfully!');
-    } catch (error: any) {
-      Alert.alert('Error', error?.response?.data?.message || 'Failed to resend code');
+    const { error } = await tryCatch(
+      () => api.post('/api/auth/mobile/resend-code', { email }),
+      'Failed to resend code'
+    );
+
+    if (error) {
+      Alert.alert('Error', error);
+      return;
     }
+
+    Alert.alert('Success', 'Verification code resent successfully!');
   };
 
   return (

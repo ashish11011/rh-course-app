@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '@/components/ui/text';
 import { Card, CardContent } from '@/components/ui/card';
 import { router } from 'expo-router';
 import api from '@/lib/api';
+import { tryCatch } from '@/lib/apiUtils';
 import { ArrowLeft, Clock, CheckCircle2, XCircle } from 'lucide-react-native';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Purchase {
   id: string;
@@ -32,13 +34,23 @@ export default function PurchaseHistoryScreen() {
     try {
       setLoading(true);
       setError('');
-      const response = await api.get('/api/auth/mobile/purchases');
+      const { data: response, error, rawError } = await tryCatch(
+        () => api.get('/api/auth/mobile/purchases'),
+        'Failed to load purchase history.'
+      );
+
+      if (error || !response) {
+        console.error(rawError);
+        setError(error || 'Failed to load purchase history.');
+        return;
+      }
+
       if (response.data?.success) {
         setPurchases(response.data.purchases || []);
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setError(err?.response?.data?.message || 'Failed to load purchase history.');
+      setError('Failed to load purchase history.');
     } finally {
       setLoading(false);
     }
@@ -75,24 +87,24 @@ export default function PurchaseHistoryScreen() {
               <CardContent className="p-4">
                 <View className="mb-3 flex-row items-center justify-between">
                   <View className="flex-row items-center gap-2">
-                    <View className="h-6 w-16 rounded bg-slate-200 dark:bg-neutral-800" />
-                    <View className="h-6 w-20 rounded-full bg-slate-200 dark:bg-neutral-800" />
+                    <Skeleton className="h-6 w-16 rounded bg-slate-200 dark:bg-neutral-800" />
+                    <Skeleton className="h-6 w-20 rounded-full bg-slate-200 dark:bg-neutral-800" />
                   </View>
-                  <View className="h-6 w-24 rounded bg-slate-200 dark:bg-neutral-800" />
+                  <Skeleton className="h-6 w-24 rounded bg-slate-200 dark:bg-neutral-800" />
                 </View>
 
                 <View className="mt-4 gap-3">
                   <View className="flex-row justify-between">
-                    <View className="h-4 w-16 rounded bg-slate-200 dark:bg-neutral-800" />
-                    <View className="h-4 w-1/2 rounded bg-slate-200 dark:bg-neutral-800" />
+                    <Skeleton className="h-4 w-16 rounded bg-slate-200 dark:bg-neutral-800" />
+                    <Skeleton className="h-4 w-1/2 rounded bg-slate-200 dark:bg-neutral-800" />
                   </View>
                   <View className="flex-row justify-between">
-                    <View className="h-4 w-12 rounded bg-slate-200 dark:bg-neutral-800" />
-                    <View className="h-4 w-24 rounded bg-slate-200 dark:bg-neutral-800" />
+                    <Skeleton className="h-4 w-12 rounded bg-slate-200 dark:bg-neutral-800" />
+                    <Skeleton className="h-4 w-24 rounded bg-slate-200 dark:bg-neutral-800" />
                   </View>
                   <View className="flex-row justify-between">
-                    <View className="h-4 w-24 rounded bg-slate-200 dark:bg-neutral-800" />
-                    <View className="h-4 w-16 rounded bg-slate-200 dark:bg-neutral-800" />
+                    <Skeleton className="h-4 w-24 rounded bg-slate-200 dark:bg-neutral-800" />
+                    <Skeleton className="h-4 w-16 rounded bg-slate-200 dark:bg-neutral-800" />
                   </View>
                 </View>
               </CardContent>

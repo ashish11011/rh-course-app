@@ -11,6 +11,8 @@ import { useEffect } from 'react';
 import {
   IconBook,
   IconBookFilled,
+  IconPlayCardStar,
+  IconPlayCardStarFilled,
   IconSearch,
   IconSearchFilled,
   IconStar,
@@ -50,7 +52,6 @@ export default function TabLayout() {
     }
   }, [isAuthenticated, dispatch]);
 
-
   const requireAuth = (e: any) => {
     if (!isAuthenticated) {
       e.preventDefault();
@@ -81,6 +82,20 @@ export default function TabLayout() {
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <Icon as={focused ? IconSearchFilled : IconSearch} className="size-6" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="idcard"
+        options={{
+          title: 'ID Card',
+          headerShown: false,
+          tabBarIcon: ({ color, focused }) => (
+            <Icon
+              as={focused ? IconPlayCardStarFilled : IconPlayCardStar}
+              className="size-6"
+              color={color}
+            />
           ),
         }}
       />

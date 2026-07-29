@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
 import { setCredentials } from '@/store/authSlice';
 import api from '@/lib/api';
+import { tryCatch } from '@/lib/apiUtils';
 
 export default function ProfileScreen() {
   const dispatch = useDispatch();
@@ -43,7 +44,16 @@ export default function ProfileScreen() {
         city,
       };
 
-      await api.put('/api/auth/mobile/user', payload);
+      const { error, rawError } = await tryCatch(
+        () => api.put('/api/auth/mobile/user', payload),
+        'Something went wrong'
+      );
+
+      if (error) {
+        console.error(rawError);
+        Alert.alert('Update Failed', error);
+        return;
+      }
       
       // Update local redux state
       const updatedUser = { ...user, ...payload, mobileNumber: payload.number };
@@ -52,9 +62,9 @@ export default function ProfileScreen() {
       Alert.alert('Success', 'Profile updated successfully!', [
         { text: 'OK', onPress: () => router.back() }
       ]);
-    } catch (error: any) {
+    } catch (error) {
       console.error(error);
-      Alert.alert('Update Failed', error?.response?.data?.error || error?.response?.data?.message || 'Something went wrong');
+      Alert.alert('Update Failed', 'Something went wrong');
     } finally {
       setLoading(false);
     }

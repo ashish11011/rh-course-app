@@ -5,6 +5,7 @@ import { Text } from '@/components/ui/text';
 import { Input } from '@/components/ui/input';
 import { router } from 'expo-router';
 import api from '@/lib/api';
+import { tryCatch } from '@/lib/apiUtils';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ForgotPasswordScreen() {
@@ -21,10 +22,20 @@ export default function ForgotPasswordScreen() {
     }
     setLoading(true);
     try {
-      await api.post('/api/auth/mobile/forgot-password', { email });
+      const { error } = await tryCatch(
+        () => api.post('/api/auth/mobile/forgot-password', { email }),
+        'Failed to send code'
+      );
+
+      if (error) {
+        Alert.alert('Error', error);
+        return;
+      }
+
       setStep(2);
-    } catch (error: any) {
-      Alert.alert('Error', error?.response?.data?.message || 'Failed to send code');
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'Failed to send code');
     } finally {
       setLoading(false);
     }
@@ -37,12 +48,22 @@ export default function ForgotPasswordScreen() {
     }
     setLoading(true);
     try {
-      await api.post('/api/auth/mobile/reset-password', { email, code, password: newPassword });
+      const { error } = await tryCatch(
+        () => api.post('/api/auth/mobile/reset-password', { email, code, password: newPassword }),
+        'Failed to reset password'
+      );
+
+      if (error) {
+        Alert.alert('Error', error);
+        return;
+      }
+
       Alert.alert('Success', 'Password reset successfully!', [
         { text: 'OK', onPress: () => router.replace('/(auth)/login') },
       ]);
-    } catch (error: any) {
-      Alert.alert('Error', error?.response?.data?.message || 'Failed to reset password');
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'Failed to reset password');
     } finally {
       setLoading(false);
     }

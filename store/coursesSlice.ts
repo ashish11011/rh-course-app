@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '@/lib/api';
+import { tryCatch } from '@/lib/apiUtils';
 
 export interface Course {
   enrolmentId: string;
@@ -56,34 +57,40 @@ const initialState: CoursesState = {
 export const fetchPurchasedCourses = createAsyncThunk(
   'courses/fetchPurchasedCourses',
   async (_, { rejectWithValue }) => {
-    try {
-      const response = await api.get('/api/auth/mobile/courses');
-      if (response.data.success) {
-        return response.data.courses;
-      }
-      return rejectWithValue('Failed to fetch courses');
-    } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.error || error.message || 'Failed to fetch courses'
-      );
+    const { data: response, error } = await tryCatch(
+      () => api.get('/api/auth/mobile/courses'),
+      'Failed to fetch courses'
+    );
+
+    if (error || !response) {
+      return rejectWithValue(error || 'Failed to fetch courses');
     }
+
+    if (response.data.success) {
+      return response.data.courses;
+    }
+
+    return rejectWithValue('Failed to fetch courses');
   }
 );
 
 export const fetchAllCourses = createAsyncThunk(
   'courses/fetchAllCourses',
   async (_, { rejectWithValue }) => {
-    try {
-      const response = await api.get('/api/course');
-      if (response.data.success) {
-        return response.data.courses;
-      }
-      return rejectWithValue('Failed to fetch all courses');
-    } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.error || error.message || 'Failed to fetch all courses'
-      );
+    const { data: response, error } = await tryCatch(
+      () => api.get('/api/course'),
+      'Failed to fetch all courses'
+    );
+
+    if (error || !response) {
+      return rejectWithValue(error || 'Failed to fetch all courses');
     }
+
+    if (response.data.success) {
+      return response.data.courses;
+    }
+
+    return rejectWithValue('Failed to fetch all courses');
   }
 );
 

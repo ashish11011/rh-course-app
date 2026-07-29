@@ -9,6 +9,7 @@ import { MonitorPlay, LucideIcon } from 'lucide-react-native';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { PublicCourse } from '@/store/coursesSlice';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const CardDetailIcon = ({
   IconComponent,
@@ -57,11 +58,11 @@ export default function SearchScreen() {
             <View className="gap-6">
               {Array.from({ length: 4 }).map((_, index) => (
                 <View key={index} className="mb-4 w-full">
-                  <View className="h-48 w-full rounded-lg bg-gray-200 dark:bg-neutral-800" />
-                  <View className="mt-3 h-5 w-3/4 rounded bg-gray-200 dark:bg-neutral-800" />
+                  <Skeleton className="h-48 w-full rounded-lg bg-gray-200 dark:bg-neutral-800" />
+                  <Skeleton className="mt-3 h-5 w-3/4 rounded bg-gray-200 dark:bg-neutral-800" />
                   <View className="mt-2 flex-row gap-6">
-                    <View className="h-4 w-12 rounded bg-gray-200 dark:bg-neutral-800" />
-                    <View className="h-4 w-16 rounded bg-gray-200 dark:bg-neutral-800" />
+                    <Skeleton className="h-4 w-12 rounded bg-gray-200 dark:bg-neutral-800" />
+                    <Skeleton className="h-4 w-16 rounded bg-gray-200 dark:bg-neutral-800" />
                   </View>
                 </View>
               ))}

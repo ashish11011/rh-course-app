@@ -8,6 +8,7 @@ import { useDispatch } from 'react-redux';
 import { setCredentials } from '@/store/authSlice';
 import * as SecureStore from 'expo-secure-store';
 import api from '@/lib/api';
+import { tryCatch } from '@/lib/apiUtils';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'nativewind';
 
@@ -27,10 +28,17 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      const response = await api.post('/api/auth/mobile/login', { email, password });
+      const { data: response, error } = await tryCatch(
+        () => api.post('/api/auth/mobile/login', { email, password }),
+        'Login failed'
+      );
+
+      if (error || !response) {
+        Alert.alert('Login Failed', error || 'Login failed');
+        return;
+      }
       
-      const { IdToken, AccessToken, RefreshToken } = response.data.tokens;
-      const mockUser = { id: 1, email };
+      const { IdToken, RefreshToken } = response.data.tokens;
 
       // Save token securely
       await SecureStore.setItemAsync('userToken', IdToken);
@@ -40,19 +48,22 @@ export default function LoginScreen() {
       
       dispatch(setCredentials({ token: IdToken }));
 
-      try {
-        const userRes = await api.get('/api/auth/mobile/user');
-        if (userRes.data?.user) {
-          dispatch(setCredentials({ token: IdToken, user: userRes.data.user }));
-        }
-      } catch (error) {
-        console.error('Failed to fetch user after login', error);
+      const { data: userRes, rawError } = await tryCatch(
+        () => api.get('/api/auth/mobile/user'),
+        'Failed to fetch user after login'
+      );
+      if (rawError) {
+        console.error('Failed to fetch user after login', rawError);
+      }
+      if (userRes?.data?.user) {
+        dispatch(setCredentials({ token: IdToken, user: userRes.data.user }));
       }
 
       // Navigate to tabs
       router.replace('/(tabs)');
-    } catch (error: any) {
-      Alert.alert('Login Failed', error?.response?.data?.message || 'Something went wrong');
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Login Failed', 'Something went wrong');
     } finally {
       setLoading(false);
     }

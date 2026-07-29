@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, ScrollView, ActivityIndicator, TouchableOpacity, Linking } from 'react-native';
+import { View, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '@/components/ui/text';
 import { Card, CardContent } from '@/components/ui/card';
 import { router } from 'expo-router';
 import api from '@/lib/api';
+import { tryCatch } from '@/lib/apiUtils';
 import {
   ArrowLeft,
   CalendarDays,
@@ -14,6 +15,7 @@ import {
   MessageCircle,
   FileBadge,
 } from 'lucide-react-native';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Workshop {
   registrationId: string;
@@ -42,13 +44,23 @@ export default function WorkshopsScreen() {
     try {
       setLoading(true);
       setError('');
-      const response = await api.get('/api/auth/mobile/workshops');
+      const { data: response, error, rawError } = await tryCatch(
+        () => api.get('/api/auth/mobile/workshops'),
+        'Failed to load workshops.'
+      );
+
+      if (error || !response) {
+        console.error(rawError);
+        setError(error || 'Failed to load workshops.');
+        return;
+      }
+
       if (response.data?.success) {
         setWorkshops(response.data.workshops || []);
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setError(err?.response?.data?.message || 'Failed to load workshops.');
+      setError('Failed to load workshops.');
     } finally {
       setLoading(false);
     }
@@ -111,27 +123,27 @@ export default function WorkshopsScreen() {
               <CardContent className="p-4">
                 <View className="mb-3">
                   <View className="flex-row items-start justify-between">
-                    <View className="h-6 w-2/3 rounded-md bg-slate-200 dark:bg-neutral-800" />
-                    <View className="h-5 w-16 rounded-full bg-slate-200 dark:bg-neutral-800" />
+                    <Skeleton className="h-6 w-2/3 rounded-md bg-slate-200 dark:bg-neutral-800" />
+                    <Skeleton className="h-5 w-16 rounded-full bg-slate-200 dark:bg-neutral-800" />
                   </View>
-                  <View className="mt-2 h-4 w-full rounded-md bg-slate-200 dark:bg-neutral-800" />
-                  <View className="mt-1 h-4 w-3/4 rounded-md bg-slate-200 dark:bg-neutral-800" />
+                  <Skeleton className="mt-2 h-4 w-full rounded-md bg-slate-200 dark:bg-neutral-800" />
+                  <Skeleton className="mt-1 h-4 w-3/4 rounded-md bg-slate-200 dark:bg-neutral-800" />
                 </View>
 
                 <View className="mb-4 gap-2 rounded-lg bg-slate-50 p-3 dark:bg-neutral-800/50">
                   <View className="flex-row items-center gap-2">
-                    <View className="h-4 w-4 rounded bg-slate-200 dark:bg-neutral-700" />
-                    <View className="h-4 w-1/2 rounded bg-slate-200 dark:bg-neutral-700" />
+                    <Skeleton className="h-4 w-4 rounded bg-slate-200 dark:bg-neutral-700" />
+                    <Skeleton className="h-4 w-1/2 rounded bg-slate-200 dark:bg-neutral-700" />
                   </View>
                   <View className="flex-row items-center gap-2">
-                    <View className="h-4 w-4 rounded bg-slate-200 dark:bg-neutral-700" />
-                    <View className="h-4 w-1/3 rounded bg-slate-200 dark:bg-neutral-700" />
+                    <Skeleton className="h-4 w-4 rounded bg-slate-200 dark:bg-neutral-700" />
+                    <Skeleton className="h-4 w-1/3 rounded bg-slate-200 dark:bg-neutral-700" />
                   </View>
                 </View>
 
                 <View className="flex-row gap-2">
-                  <View className="h-10 flex-1 rounded-lg bg-slate-200 dark:bg-neutral-800" />
-                  <View className="h-10 flex-1 rounded-lg bg-slate-200 dark:bg-neutral-800" />
+                  <Skeleton className="h-10 flex-1 rounded-lg bg-slate-200 dark:bg-neutral-800" />
+                  <Skeleton className="h-10 flex-1 rounded-lg bg-slate-200 dark:bg-neutral-800" />
                 </View>
               </CardContent>
             </Card>
