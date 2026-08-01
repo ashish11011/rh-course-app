@@ -26,7 +26,9 @@ export default function ContactUsScreen() {
   return (
     <>
       <Stack.Screen options={{ title: 'Contact Us', headerBackTitle: 'Back' }} />
-      <ScrollView className="flex-1 bg-white p-6 dark:bg-neutral-950">
+      <ScrollView
+        className="flex-1 bg-white p-6 dark:bg-neutral-950"
+        showsVerticalScrollIndicator={false}>
         <Text className="mb-4 text-2xl font-bold dark:text-white">Contact Us</Text>
         <Text className="mb-8 text-base text-gray-600 dark:text-gray-300">
           We'd love to hear from you. Send us a message or reach out directly.

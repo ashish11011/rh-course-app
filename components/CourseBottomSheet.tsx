@@ -57,7 +57,9 @@ const CourseBottomSheet = forwardRef<BottomSheet, Props>(({ course }, ref) => {
       enablePanDownToClose
       backgroundStyle={{ backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }}
       backdropComponent={renderBackdrop}>
-      <BottomSheetScrollView className={`${isDark ? 'bg-neutral-950' : 'bg-white'} flex-1`}>
+      <BottomSheetScrollView
+        className={`${isDark ? 'bg-neutral-950' : 'bg-white'} flex-1`}
+        showsVerticalScrollIndicator={false}>
         {course ? (
           <>
             <Image

@@ -11,6 +11,8 @@ import api from '@/lib/api';
 import { tryCatch } from '@/lib/apiUtils';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'nativewind';
+import { getFCMToken, requestUserPermission } from '@/lib/notifications';
+import { getOrCreateDeviceId } from '@/lib/deviceIdentity';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -28,8 +30,21 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
+      let deviceId: string | null = null;
+      let fcmToken: string | undefined;
+
+      try {
+        deviceId = await getOrCreateDeviceId();
+        if (Platform.OS !== 'web') {
+          await requestUserPermission();
+          fcmToken = await getFCMToken();
+        }
+      } catch (tokenError) {
+        console.error('Failed to prepare device details for login', tokenError);
+      }
+
       const { data: response, error } = await tryCatch(
-        () => api.post('/api/auth/mobile/login', { email, password }),
+        () => api.post('/api/auth/mobile/login', { email, password, deviceId, fcmToken }),
         'Login failed'
       );
 

@@ -157,6 +157,7 @@ export default function FeaturedScreen() {
       <ScrollView
         className="flex-1"
         contentContainerClassName="py-20"
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -246,6 +247,7 @@ function CourseCardsHorizontal({
         horizontal
         className="mt-3 pl-4"
         showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
         contentContainerClassName="gap-8">
         {allCoursesLoading
           ? // Skeleton Loader

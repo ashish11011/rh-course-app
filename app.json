@@ -7,9 +7,7 @@
     "icon": "./assets/images/rh_app_logo.png",
     "scheme": "my-app",
     "userInterfaceStyle": "automatic",
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.rh.healthcare",
@@ -51,6 +49,12 @@
         }
       ],
       "./plugins/with-gradle-build-settings",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow RH Healthcare to access your photos so you can upload your membership card photo."
+        }
+      ],
       "expo-video"
     ],
     "experiments": {

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { logout } from '@/store/authSlice';
 import { Platform } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 
 // Replace with your actual backend URL when ready
 let API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
@@ -31,10 +32,14 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (error.response && error.response.status === 401) {
       // Auto logout if 401 response returned from api
       const { store } = require('@/store');
+      if (Platform.OS !== 'web') {
+        await SecureStore.deleteItemAsync('userToken');
+        await SecureStore.deleteItemAsync('refreshToken');
+      }
       store.dispatch(logout());
     }
     return Promise.reject(error);

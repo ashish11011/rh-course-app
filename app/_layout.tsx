@@ -11,27 +11,29 @@ import { useColorScheme } from 'nativewind';
 import { Provider, useDispatch } from 'react-redux';
 import { Platform } from 'react-native';
 import { store } from '@/store';
-import { setCredentials } from '@/store/authSlice';
+import { logout, setCredentials } from '@/store/authSlice';
 import * as SecureStore from 'expo-secure-store';
 import api from '@/lib/api';
-import { tryCatch } from '@/lib/apiUtils';
+import { isInvalidTokenError, tryCatch } from '@/lib/apiUtils';
 import { useEffect, useState } from 'react';
 import messaging from '@react-native-firebase/messaging';
-import { requestUserPermission, getFCMToken, setupNotificationListeners } from '@/lib/notifications';
+import {
+  requestUserPermission,
+  getFCMToken,
+  setupNotificationListeners,
+} from '@/lib/notifications';
 import { useNetInfo } from '@react-native-community/netinfo';
 import OfflineScreen from '@/components/OfflineScreen';
 import * as ScreenCapture from 'expo-screen-capture';
 
 // Register background handler early
 if (Platform.OS !== 'web') {
-  messaging().setBackgroundMessageHandler(async remoteMessage => {
+  messaging().setBackgroundMessageHandler(async (remoteMessage) => {
     console.log('Message handled in the background!', remoteMessage);
   });
 }
 
-export {
-  ErrorBoundary,
-} from 'expo-router';
+export { ErrorBoundary } from 'expo-router';
 
 function AppContent() {
   const { colorScheme } = useColorScheme();
@@ -66,6 +68,10 @@ function AppContent() {
             'Failed to fetch user profile'
           );
           if (rawError) {
+            if (isInvalidTokenError(rawError)) {
+              dispatch(logout());
+              return;
+            }
             console.error('Failed to fetch user profile', rawError);
           }
           if (userRes?.data?.user) {
@@ -95,13 +101,15 @@ function AppContent() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }}>
+    <GestureHandlerRootView
+      style={{ flex: 1, backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }}>
       <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
         <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-        <Stack screenOptions={{ 
-          animation: 'slide_from_right',
-          contentStyle: { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }
-        }}>
+        <Stack
+          screenOptions={{
+            animation: 'slide_from_right',
+            contentStyle: { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+          }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         </Stack>

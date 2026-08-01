@@ -63,7 +63,7 @@ export default function CourseScreen() {
   return (
     <SafeAreaView className={`flex-1 ${isDark ? 'bg-neutral-950' : 'bg-white'}`} edges={['bottom']}>
       <Stack.Screen options={{ title: course.title, headerBackTitle: 'Back' }} />
-      <ScrollView className="flex-1">
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <Image
           source={{
             uri: course.bannerImageUrl.startsWith('http')

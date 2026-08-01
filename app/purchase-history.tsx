@@ -81,7 +81,7 @@ export default function PurchaseHistoryScreen() {
   return (
     <SafeAreaView className="flex-1 bg-slate-50 dark:bg-neutral-950">
       {loading ? (
-        <ScrollView className="flex-1 px-4 pt-4">
+        <ScrollView className="flex-1 px-4 pt-4" showsVerticalScrollIndicator={false}>
           {[1, 2, 3, 4, 5].map((key) => (
             <Card key={key} className="mb-4 bg-white shadow-sm dark:bg-neutral-900">
               <CardContent className="p-4">
@@ -123,7 +123,7 @@ export default function PurchaseHistoryScreen() {
           <Text className="text-lg font-medium text-gray-500">No purchases found.</Text>
         </View>
       ) : (
-        <ScrollView className="flex-1 px-4 pt-4">
+        <ScrollView className="flex-1 px-4 pt-4" showsVerticalScrollIndicator={false}>
           {purchases.map((purchase) => {
             const formattedDate = purchase.transactionDate
               ? new Date(purchase.transactionDate).toLocaleDateString('en-IN', {

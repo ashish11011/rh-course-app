@@ -35,6 +35,24 @@ export function getApiErrorMessage(error: unknown, fallbackMessage = 'Something 
   return fallbackMessage;
 }
 
+export function isInvalidTokenError(error: unknown) {
+  if (!axios.isAxiosError(error) || error.response?.status !== 401) {
+    return false;
+  }
+
+  const responseData = error.response.data as
+    | { message?: string; error?: string }
+    | string
+    | undefined;
+
+  const message =
+    typeof responseData === 'string'
+      ? responseData
+      : responseData?.error || responseData?.message;
+
+  return message === 'Unauthorized: Invalid token';
+}
+
 export async function tryCatch<T>(
   request: () => Promise<T>,
   fallbackMessage?: string

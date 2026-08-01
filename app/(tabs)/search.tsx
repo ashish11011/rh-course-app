@@ -53,7 +53,10 @@ export default function SearchScreen() {
           />
         </View>
 
-        <ScrollView className="flex-1 px-6" contentContainerClassName="pb-20">
+        <ScrollView
+          className="flex-1 px-6"
+          contentContainerClassName="pb-20"
+          showsVerticalScrollIndicator={false}>
           {allCoursesLoading ? (
             <View className="gap-6">
               {Array.from({ length: 4 }).map((_, index) => (

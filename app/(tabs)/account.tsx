@@ -39,6 +39,7 @@ export default function AccountScreen() {
       });
     } else if (link.name === 'Logout') {
       await SecureStore.deleteItemAsync('userToken');
+      await SecureStore.deleteItemAsync('refreshToken');
       dispatch(logout());
       router.replace('/(auth)/login' as any);
     } else if (link.href) {
@@ -62,7 +63,9 @@ export default function AccountScreen() {
   });
 
   return (
-    <ScrollView className="flex-1 bg-slate-50 dark:bg-neutral-950">
+    <ScrollView
+      className="flex-1 bg-slate-50 dark:bg-neutral-950"
+      showsVerticalScrollIndicator={false}>
       <View className="w-full flex-1 items-center">
         <View className="w-full flex-1 items-center pt-20">
           <LinearGradient

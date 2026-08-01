@@ -50,7 +50,9 @@ export default function FaqsScreen() {
   return (
     <>
       <Stack.Screen options={{ title: 'FAQs', headerBackTitle: 'Back' }} />
-      <ScrollView className="flex-1 bg-white p-6 dark:bg-neutral-950">
+      <ScrollView
+        className="flex-1 bg-white p-6 dark:bg-neutral-950"
+        showsVerticalScrollIndicator={false}>
         <Text className="mb-6 text-2xl font-bold dark:text-white">Frequently Asked Questions</Text>
         
         <Accordion type="multiple" collapsible className="mb-10 w-full" defaultValue={['item-0']}>

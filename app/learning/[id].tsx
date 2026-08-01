@@ -20,32 +20,19 @@ type ActivePdf = {
 
 const MEDIA_BASE_URL = 'https://d2c3lsl35lix55.cloudfront.net';
 
-function normalizeRemoteUrl(url: string) {
-  try {
-    const parsedUrl = new URL(url);
-    parsedUrl.pathname = parsedUrl.pathname
-      .split('/')
-      .map((segment) => encodeURIComponent(decodeURIComponent(segment)))
-      .join('/');
-    return parsedUrl.toString();
-  } catch {
-    return encodeURI(url);
-  }
-}
-
 function buildMediaUrl(mediaUrl: string) {
   const trimmedUrl = mediaUrl.trim();
 
   if (/^https?:\/\//i.test(trimmedUrl)) {
-    return normalizeRemoteUrl(trimmedUrl);
+    return trimmedUrl;
   }
 
   if (trimmedUrl.startsWith('/api/')) {
     const baseUrl = api.defaults.baseURL || '';
-    return normalizeRemoteUrl(`${baseUrl}${trimmedUrl}`);
+    return `${baseUrl}${trimmedUrl}`;
   }
 
-  return normalizeRemoteUrl(`${MEDIA_BASE_URL}/${trimmedUrl.replace(/^\/+/, '')}`);
+  return `${MEDIA_BASE_URL}/${trimmedUrl.replace(/^\/+/, '')}`;
 }
 
 export default function EnrolledCourseScreen() {
@@ -172,7 +159,7 @@ export default function EnrolledCourseScreen() {
   return (
     <SafeAreaView className={`flex-1 ${isDark ? 'bg-neutral-950' : 'bg-white'}`} edges={['bottom']}>
       <Stack.Screen options={{ title: course.title, headerBackTitle: 'Back' }} />
-      <ScrollView className="flex-1">
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <Image
           source={{ uri: course.bannerImageUrl?.startsWith('http') ? course.bannerImageUrl : `https://d2c3lsl35lix55.cloudfront.net/${course.bannerImageUrl}` }}
           className="h-52 w-full object-cover"
@@ -277,6 +264,8 @@ export default function EnrolledCourseScreen() {
                 trustAllCerts={false}
                 enablePaging={false}
                 enableRTL={false}
+                showsHorizontalScrollIndicator={false}
+                showsVerticalScrollIndicator={false}
                 onLoadComplete={() => setPdfLoading(false)}
                 onError={(error) => {
                   console.error('Failed to load PDF', error);
@@ -324,7 +313,10 @@ const styles = StyleSheet.create({
 
 function CourseDetailSkeleton() {
   return (
-    <ScrollView className="flex-1" contentContainerClassName="pb-10">
+    <ScrollView
+      className="flex-1"
+      contentContainerClassName="pb-10"
+      showsVerticalScrollIndicator={false}>
       <Skeleton className="h-52 w-full bg-gray-200 dark:bg-neutral-800" />
       <View className="flex-1 px-4 py-6">
         <Skeleton className="h-7 w-11/12 rounded bg-gray-200 dark:bg-neutral-800" />

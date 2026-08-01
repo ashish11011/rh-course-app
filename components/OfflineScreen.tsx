@@ -29,6 +29,7 @@ export default function OfflineScreen() {
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={textColor} />
         }

@@ -117,7 +117,7 @@ export default function WorkshopsScreen() {
       </View> */}
 
       {loading ? (
-        <ScrollView className="flex-1 px-4 pt-4">
+        <ScrollView className="flex-1 px-4 pt-4" showsVerticalScrollIndicator={false}>
           {[1, 2, 3].map((key) => (
             <Card key={key} className="mb-4 bg-white shadow-sm dark:bg-neutral-900">
               <CardContent className="p-4">
@@ -161,7 +161,7 @@ export default function WorkshopsScreen() {
           <Text className="text-lg font-medium text-gray-500">No workshops found.</Text>
         </View>
       ) : (
-        <ScrollView className="flex-1 px-4 pt-4">
+        <ScrollView className="flex-1 px-4 pt-4" showsVerticalScrollIndicator={false}>
           {workshops.map((workshop) => (
             <Card
               key={workshop.registrationId}
