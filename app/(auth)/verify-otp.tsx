@@ -85,7 +85,7 @@ export default function VerifyOtpScreen() {
         </View>
 
         <TouchableOpacity 
-          className={`mt-8 w-full items-center justify-center rounded-lg bg-blue-600 py-4 ${loading ? 'opacity-70' : ''}`}
+          className={`mt-8 w-full items-center justify-center rounded-lg bg-green-700 py-2 ${loading ? 'opacity-70' : ''}`}
           activeOpacity={0.8}
           onPress={handleVerify}
           disabled={loading}

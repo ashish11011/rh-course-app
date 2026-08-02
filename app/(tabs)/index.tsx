@@ -14,11 +14,11 @@ import {
   Linking,
   RefreshControl,
 } from 'react-native';
-import remoteConfig from '@react-native-firebase/remote-config';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '@/store';
 import { PublicCourse, fetchAllCourses } from '@/store/coursesSlice';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getFeaturedSectionConfig } from '@/src/services/remoteConfig';
 
 type HomeSectionConfig = {
   id:
@@ -41,16 +41,7 @@ export default function FeaturedScreen() {
 
   const fetchConfig = useCallback(async () => {
     try {
-      await remoteConfig().setConfigSettings({
-        minimumFetchIntervalMillis: 0,
-      });
-
-      await remoteConfig().setDefaults({
-        featured_section: JSON.stringify({ homeSection: [] }),
-      });
-      await remoteConfig().fetchAndActivate();
-
-      const featuredSectionStr = remoteConfig().getValue('featured_section').asString();
+      const featuredSectionStr = await getFeaturedSectionConfig();
       if (featuredSectionStr) {
         const parsed = JSON.parse(featuredSectionStr);
         if (parsed.homeSection && Array.isArray(parsed.homeSection)) {

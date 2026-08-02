@@ -59,6 +59,7 @@ export default function PurchaseHistoryScreen() {
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
       case 'completed':
+      case 'captured':
         return <CheckCircle2 size={20} color="#16a34a" />;
       case 'pending':
         return <Clock size={20} color="#eab308" />;
@@ -70,6 +71,7 @@ export default function PurchaseHistoryScreen() {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'completed':
+      case 'captured':
         return 'text-green-600 bg-green-50 dark:bg-green-950/30';
       case 'pending':
         return 'text-yellow-600 bg-yellow-50 dark:bg-yellow-950/30';

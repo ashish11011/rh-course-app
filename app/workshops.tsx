@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, ScrollView, TouchableOpacity, Linking } from 'react-native';
+import { Alert, View, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '@/components/ui/text';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,6 +16,10 @@ import {
   FileBadge,
 } from 'lucide-react-native';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  getCertificateUrl,
+  viewCertificate,
+} from '@/lib/certificateDownload';
 
 interface Workshop {
   registrationId: string;
@@ -107,6 +111,18 @@ export default function WorkshopsScreen() {
     });
   };
 
+  const handleCertificateView = async (workshop: Workshop) => {
+    const url = getCertificateUrl(workshop.certificateUrl);
+    if (!url) return;
+
+    try {
+      await viewCertificate(url);
+    } catch (viewError) {
+      console.error(viewError);
+      Alert.alert('Unable to open certificate', 'Please try again later.');
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-slate-50 dark:bg-neutral-950">
       {/* <View className="flex-row items-center border-b border-gray-200 bg-white px-4 py-4 dark:border-neutral-800 dark:bg-neutral-900">
@@ -162,76 +178,78 @@ export default function WorkshopsScreen() {
         </View>
       ) : (
         <ScrollView className="flex-1 px-4 pt-4" showsVerticalScrollIndicator={false}>
-          {workshops.map((workshop) => (
-            <Card
-              key={workshop.registrationId}
-              className="mb-4 bg-white shadow-sm dark:bg-neutral-900">
-              <CardContent className="p-4">
-                <View className="mb-3">
-                  <View className="flex-row items-start justify-between">
-                    <Text className="mr-2 flex-1 text-lg font-bold text-gray-900 dark:text-white">
-                      {workshop.name}
-                    </Text>
-                    <View
-                      className={`flex-row items-center gap-1 rounded-full px-2 py-1 ${getPaymentStatusColor(workshop.paymentStatus)}`}>
-                      {getPaymentStatusIcon(workshop.paymentStatus)}
-                      <Text className="text-[10px] font-bold uppercase">
-                        {workshop.paymentStatus}
+          {workshops.map((workshop) => {
+            return (
+              <Card
+                key={workshop.registrationId}
+                className="mb-4 bg-white shadow-sm dark:bg-neutral-900">
+                <CardContent className="p-4">
+                  <View className="mb-3">
+                    <View className="flex-row items-start justify-between">
+                      <Text className="mr-2 flex-1 text-lg font-bold text-gray-900 dark:text-white">
+                        {workshop.name}
+                      </Text>
+                      <View
+                        className={`flex-row items-center gap-1 rounded-full px-2 py-1 ${getPaymentStatusColor(workshop.paymentStatus)}`}>
+                        {getPaymentStatusIcon(workshop.paymentStatus)}
+                        <Text className="text-[10px] font-bold uppercase">
+                          {workshop.paymentStatus}
+                        </Text>
+                      </View>
+                    </View>
+                    {workshop.description ? (
+                      <Text
+                        className="mt-1 text-sm text-gray-500 dark:text-gray-400"
+                        numberOfLines={2}>
+                        {workshop.description}
+                      </Text>
+                    ) : null}
+                  </View>
+
+                  <View className="mb-4 gap-2 rounded-lg bg-slate-50 p-3 dark:bg-neutral-800">
+                    <View className="flex-row items-center gap-2">
+                      <CalendarDays size={16} color="#64748b" />
+                      <Text className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        {formatDate(workshop.startTime)} • {formatTime(workshop.startTime)}
+                      </Text>
+                    </View>
+                    <View className="flex-row items-center gap-2">
+                      <MapPin size={16} color="#64748b" />
+                      <Text className="text-sm font-medium capitalize text-slate-700 dark:text-slate-300">
+                        {workshop.modeOfAttendance || 'Online'}
                       </Text>
                     </View>
                   </View>
-                  {workshop.description ? (
-                    <Text
-                      className="mt-1 text-sm text-gray-500 dark:text-gray-400"
-                      numberOfLines={2}>
-                      {workshop.description}
-                    </Text>
-                  ) : null}
-                </View>
 
-                <View className="mb-4 gap-2 rounded-lg bg-slate-50 p-3 dark:bg-neutral-800">
-                  <View className="flex-row items-center gap-2">
-                    <CalendarDays size={16} color="#64748b" />
-                    <Text className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      {formatDate(workshop.startTime)} • {formatTime(workshop.startTime)}
-                    </Text>
+                  <View className="flex-row gap-2">
+                    {workshop.whatsappLink ? (
+                      <TouchableOpacity
+                        className="flex-1 flex-row items-center justify-center gap-2 rounded-lg bg-[#25D366] py-2.5"
+                        onPress={() => Linking.openURL(workshop.whatsappLink!)}>
+                        <MessageCircle size={18} color="white" />
+                        <Text className="font-semibold text-white">Join WhatsApp</Text>
+                      </TouchableOpacity>
+                    ) : null}
+
+                    {workshop.certificateUrl ? (
+                      <TouchableOpacity
+                        className="flex-1 flex-row items-center justify-center gap-2 rounded-lg bg-green-700 py-2.5"
+                        onPress={() => handleCertificateView(workshop)}>
+                        <FileBadge size={18} color="white" />
+                        <Text className="font-semibold text-white">Certificate</Text>
+                      </TouchableOpacity>
+                    ) : null}
                   </View>
-                  <View className="flex-row items-center gap-2">
-                    <MapPin size={16} color="#64748b" />
-                    <Text className="text-sm font-medium capitalize text-slate-700 dark:text-slate-300">
-                      {workshop.modeOfAttendance || 'Online'}
-                    </Text>
-                  </View>
-                </View>
 
-                <View className="flex-row gap-2">
-                  {workshop.whatsappLink ? (
-                    <TouchableOpacity
-                      className="flex-1 flex-row items-center justify-center gap-2 rounded-lg bg-[#25D366] py-2.5"
-                      onPress={() => Linking.openURL(workshop.whatsappLink!)}>
-                      <MessageCircle size={18} color="white" />
-                      <Text className="font-semibold text-white">Join WhatsApp</Text>
-                    </TouchableOpacity>
-                  ) : null}
-
-                  {workshop.certificateUrl ? (
-                    <TouchableOpacity
-                      className="flex-1 flex-row items-center justify-center gap-2 rounded-lg bg-blue-600 py-2.5"
-                      onPress={() => Linking.openURL(workshop.certificateUrl!)}>
-                      <FileBadge size={18} color="white" />
-                      <Text className="font-semibold text-white">Certificate</Text>
-                    </TouchableOpacity>
-                  ) : null}
-                </View>
-
-                {!workshop.whatsappLink && !workshop.certificateUrl && (
-                  <View className="w-full items-center py-2">
-                    <Text className="text-sm text-gray-400">Registration Complete</Text>
-                  </View>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+                  {!workshop.whatsappLink && !workshop.certificateUrl && (
+                    <View className="w-full items-center py-2">
+                      <Text className="text-sm text-gray-400">Registration Complete</Text>
+                    </View>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
           <View className="h-10" />
         </ScrollView>
       )}

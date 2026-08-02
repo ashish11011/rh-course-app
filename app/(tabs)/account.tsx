@@ -40,6 +40,7 @@ export default function AccountScreen() {
     } else if (link.name === 'Logout') {
       await SecureStore.deleteItemAsync('userToken');
       await SecureStore.deleteItemAsync('refreshToken');
+      await SecureStore.deleteItemAsync('authUsername');
       dispatch(logout());
       router.replace('/(auth)/login' as any);
     } else if (link.href) {
@@ -148,7 +149,7 @@ const ACCOUNT_LINKS = [
       {
         name: 'Course',
         icon: MonitorPlay,
-        href: '/courses',
+        href: '/my-courses',
       },
       {
         name: 'My workshops',

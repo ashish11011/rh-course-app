@@ -11,7 +11,7 @@ import api from '@/lib/api';
 import { tryCatch } from '@/lib/apiUtils';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'nativewind';
-import { getFCMToken, requestUserPermission } from '@/lib/notifications';
+import { getFCMToken, hasNotificationPermission } from '@/lib/notifications';
 import { getOrCreateDeviceId } from '@/lib/deviceIdentity';
 
 export default function LoginScreen() {
@@ -36,8 +36,10 @@ export default function LoginScreen() {
       try {
         deviceId = await getOrCreateDeviceId();
         if (Platform.OS !== 'web') {
-          await requestUserPermission();
-          fcmToken = await getFCMToken();
+          const notificationsAllowed = await hasNotificationPermission();
+          if (notificationsAllowed) {
+            fcmToken = await getFCMToken();
+          }
         }
       } catch (tokenError) {
         console.error('Failed to prepare device details for login', tokenError);
@@ -54,9 +56,11 @@ export default function LoginScreen() {
       }
       
       const { IdToken, RefreshToken } = response.data.tokens;
+      const authUsername = response.data.username || email.trim();
 
       // Save token securely
       await SecureStore.setItemAsync('userToken', IdToken);
+      await SecureStore.setItemAsync('authUsername', authUsername);
       if (RefreshToken) {
         await SecureStore.setItemAsync('refreshToken', RefreshToken);
       }

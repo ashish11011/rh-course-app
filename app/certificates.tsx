@@ -4,12 +4,10 @@ import {
   Alert,
   FlatList,
   Image,
-  Linking,
   Platform,
   RefreshControl,
   View,
 } from 'react-native';
-import ReactNativeBlobUtil from 'react-native-blob-util';
 import { Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Download, ExternalLink, FileBadge, RefreshCw } from 'lucide-react-native';
@@ -22,6 +20,12 @@ import { Text } from '@/components/ui/text';
 import api from '@/lib/api';
 import { tryCatch } from '@/lib/apiUtils';
 import { cloudfrontAssetUrl } from '@/lib/cloudfront';
+import {
+  downloadCertificate,
+  getCertificateFileName,
+  getCertificateUrl,
+  viewCertificate,
+} from '@/lib/certificateDownload';
 
 type Certificate = {
   type: 'workshop' | 'seminar';
@@ -47,19 +51,6 @@ function formatCertificateDate(value: string | null) {
     month: 'long',
     year: 'numeric',
   });
-}
-
-function getCertificateUrl(certificate: Certificate) {
-  return cloudfrontAssetUrl(certificate.certificate);
-}
-
-function getCertificateFileName(certificate: Certificate) {
-  const cleanName = certificate.workshopName
-    .replace(/[^a-z0-9]+/gi, '-')
-    .replace(/^-|-$/g, '')
-    .toLowerCase();
-
-  return `${cleanName || 'certificate'}-${certificate.workshopId}.pdf`;
 }
 
 export default function CertificatesScreen() {
@@ -122,62 +113,28 @@ export default function CertificatesScreen() {
   );
 
   const handleView = useCallback(async (certificate: Certificate) => {
-    const url = getCertificateUrl(certificate);
+    const url = getCertificateUrl(certificate.certificate);
     if (!url) return;
 
-    const canOpen = await Linking.canOpenURL(url);
-    if (!canOpen) {
+    try {
+      await viewCertificate(url);
+    } catch (error) {
+      console.error(error);
       Alert.alert('Unable to open certificate', 'Please try again later.');
-      return;
     }
-
-    Linking.openURL(url);
   }, []);
 
   const handleDownload = useCallback(async (certificate: Certificate) => {
-    const url = getCertificateUrl(certificate);
+    const url = getCertificateUrl(certificate.certificate);
     if (!url) return;
 
-    if (Platform.OS === 'web') {
-      Linking.openURL(url);
-      return;
-    }
-
     const downloadKey = `${certificate.type}-${certificate.workshopId}`;
-    const fileName = getCertificateFileName(certificate);
+    const fileName = getCertificateFileName(certificate.workshopName, certificate.workshopId);
     setDownloadingId(downloadKey);
 
     try {
-      const { dirs } = ReactNativeBlobUtil.fs;
-      const downloadPath =
-        Platform.OS === 'android'
-          ? `${dirs.DownloadDir}/${fileName}`
-          : `${dirs.DocumentDir}/${fileName}`;
-
-      const config =
-        Platform.OS === 'android'
-          ? {
-              addAndroidDownloads: {
-                useDownloadManager: true,
-                notification: true,
-                mediaScannable: true,
-                title: fileName,
-                path: downloadPath,
-                mime: 'application/pdf',
-                description: 'Downloading certificate',
-              },
-            }
-          : {
-              fileCache: true,
-              appendExt: 'pdf',
-              path: downloadPath,
-            };
-
-      const result = await ReactNativeBlobUtil.config(config).fetch('GET', url);
-
-      if (Platform.OS === 'ios') {
-        ReactNativeBlobUtil.ios.openDocument(result.path());
-      } else {
+      await downloadCertificate(url, fileName);
+      if (Platform.OS === 'android') {
         Alert.alert('Download complete', 'Certificate saved to your Downloads folder.');
       }
     } catch (error) {
@@ -234,10 +191,10 @@ export default function CertificatesScreen() {
               <Text>View</Text>
             </Button>
 
-            <Button
+            {/* <Button
               className="h-11 flex-1 rounded-lg bg-emerald-700 active:bg-emerald-800"
               disabled={isDownloading}
-              onPress={() => handleDownload(item)}>
+              onPress={() => handleView(item)}>
               {isDownloading ? (
                 <ActivityIndicator color="#ffffff" />
               ) : (
@@ -246,7 +203,7 @@ export default function CertificatesScreen() {
               <Text className="font-semibold text-white">
                 {isDownloading ? 'Downloading' : 'Download'}
               </Text>
-            </Button>
+            </Button> */}
           </View>
         </CardContent>
       </Card>

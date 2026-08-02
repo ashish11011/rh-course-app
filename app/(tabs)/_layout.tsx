@@ -87,6 +87,7 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="idcard"
+        listeners={{ tabPress: requireAuth }}
         options={{
           title: 'ID Card',
           headerShown: false,

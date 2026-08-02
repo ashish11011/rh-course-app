@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Image, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import * as ImagePicker from 'expo-image-picker';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import {
   Check,
   ChevronLeft,
@@ -43,6 +44,18 @@ const STEPS = [
   { title: 'Review', subtitle: 'Final details' },
 ];
 
+const MAX_PASSPORT_PHOTO_BYTES = 200 * 1024;
+const PASSPORT_PHOTO_MIME_TYPE = 'image/jpeg';
+const PASSPORT_PHOTO_COMPRESSION_STEPS = [
+  { longEdge: 900, quality: 0.8 },
+  { longEdge: 760, quality: 0.75 },
+  { longEdge: 640, quality: 0.7 },
+  { longEdge: 520, quality: 0.65 },
+  { longEdge: 420, quality: 0.58 },
+  { longEdge: 360, quality: 0.5 },
+  { longEdge: 320, quality: 0.42 },
+];
+
 type IdCardFormFlowProps = {
   initialValues: IdCardFormValues;
   onGenerated: (card: UserCardRecord) => void;
@@ -50,12 +63,18 @@ type IdCardFormFlowProps = {
 
 type LabeledInputProps = React.ComponentProps<typeof Input> & {
   label: string;
+  helperText?: string;
 };
 
-function LabeledInput({ label, className, ...props }: LabeledInputProps) {
+function LabeledInput({ label, helperText, className, ...props }: LabeledInputProps) {
   return (
     <View>
       <Text className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">{label}</Text>
+      {helperText ? (
+        <Text className="mb-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+          {helperText}
+        </Text>
+      ) : null}
       <Input
         className={cn(
           'h-12 rounded-lg border-slate-200 bg-white dark:border-neutral-800 dark:bg-neutral-900',
@@ -68,14 +87,6 @@ function LabeledInput({ label, className, ...props }: LabeledInputProps) {
   );
 }
 
-function getMimeTypeFromFilename(filename: string) {
-  const cleanFilename = filename.toLowerCase();
-
-  if (cleanFilename.endsWith('.png')) return 'image/png';
-  if (cleanFilename.endsWith('.webp')) return 'image/webp';
-  return 'image/jpeg';
-}
-
 function getFilenameFromAsset(asset: ImagePicker.ImagePickerAsset) {
   if (asset.fileName) return asset.fileName;
 
@@ -83,6 +94,72 @@ function getFilenameFromAsset(asset: ImagePicker.ImagePickerAsset) {
   if (uriName && uriName.includes('.')) return uriName;
 
   return `passport-photo-${Date.now()}.jpg`;
+}
+
+function getCompressedPhotoFilename(filename: string) {
+  const cleanFilename = filename.replace(/\.[^/.]+$/, '');
+  return `${cleanFilename || `passport-photo-${Date.now()}`}.jpg`;
+}
+
+async function getUriByteSize(uri: string) {
+  const response = await fetch(uri);
+  const blob = await response.blob();
+  return blob.size;
+}
+
+async function compressPassportPhoto(asset: ImagePicker.ImagePickerAsset) {
+  const originalWidth = asset.width || 0;
+  const originalHeight = asset.height || 0;
+  const isLandscape = originalWidth > originalHeight;
+  let smallestResult: {
+    uri: string;
+    width: number;
+    height: number;
+    size: number;
+  } | null = null;
+
+  for (const { longEdge, quality } of PASSPORT_PHOTO_COMPRESSION_STEPS) {
+    const resize =
+      originalWidth && originalHeight
+        ? isLandscape
+          ? { width: Math.min(originalWidth, longEdge) }
+          : { height: Math.min(originalHeight, longEdge) }
+        : { width: longEdge };
+
+    const result = await manipulateAsync(
+      asset.uri,
+      [{ resize }],
+      {
+        compress: quality,
+        format: SaveFormat.JPEG,
+      }
+    );
+    const size = await getUriByteSize(result.uri);
+    const candidate = {
+      uri: result.uri,
+      width: result.width,
+      height: result.height,
+      size,
+    };
+
+    if (!smallestResult || size < smallestResult.size) {
+      smallestResult = candidate;
+    }
+
+    if (size <= MAX_PASSPORT_PHOTO_BYTES) {
+      return candidate;
+    }
+  }
+
+  if (!smallestResult) {
+    throw new Error('Failed to compress image');
+  }
+
+  if (smallestResult.size > MAX_PASSPORT_PHOTO_BYTES) {
+    throw new Error('Image is too large after compression');
+  }
+
+  return smallestResult;
 }
 
 async function uploadImageToPresignedUrl(uploadUrl: string, uri: string, fileType: string) {
@@ -199,6 +276,17 @@ function isValidIsoInputDate(value: string) {
   return !Number.isNaN(date.getTime());
 }
 
+function removeWhitespace(value: string) {
+  return value.replace(/\s/g, '');
+}
+
+function sanitizeIdCardValues(values: IdCardFormValues): IdCardFormValues {
+  return {
+    ...values,
+    dateOfBirth: removeWhitespace(values.dateOfBirth),
+  };
+}
+
 function getStepError(step: number, values: IdCardFormValues) {
   if (step === 0) {
     if (!values.fullName.trim()) return 'Full name is required';
@@ -217,6 +305,7 @@ function getStepError(step: number, values: IdCardFormValues) {
   }
 
   if (step === 2) {
+    if (!values.passportPhoto.trim()) return 'Please upload a passport photo';
     if (!values.termsAccepted) return 'Please accept the terms';
   }
 
@@ -245,10 +334,15 @@ export function IdCardFormFlow({ initialValues, onGenerated }: IdCardFormFlowPro
       return;
     }
 
-    const stepError = getStepError(currentStep, values);
+    const sanitizedValues = sanitizeIdCardValues(values);
+    const stepError = getStepError(currentStep, sanitizedValues);
     if (stepError) {
       Alert.alert('Check details', stepError);
       return;
+    }
+
+    if (sanitizedValues.dateOfBirth !== values.dateOfBirth) {
+      setValues(sanitizedValues);
     }
 
     if (currentStep < STEPS.length - 1) {
@@ -265,7 +359,12 @@ export function IdCardFormFlow({ initialValues, onGenerated }: IdCardFormFlowPro
       return;
     }
 
-    const firstError = STEPS.map((_, index) => getStepError(index, values)).find(Boolean);
+    const sanitizedValues = sanitizeIdCardValues(values);
+    if (sanitizedValues.dateOfBirth !== values.dateOfBirth) {
+      setValues(sanitizedValues);
+    }
+
+    const firstError = STEPS.map((_, index) => getStepError(index, sanitizedValues)).find(Boolean);
     if (firstError) {
       Alert.alert('Check details', firstError);
       setIsPreviewing(false);
@@ -278,7 +377,7 @@ export function IdCardFormFlow({ initialValues, onGenerated }: IdCardFormFlowPro
       error,
       rawError,
     } = await tryCatch(
-      () => api.post<IdCardApiResponse>('/api/auth/mobile/id-card', values),
+      () => api.post<IdCardApiResponse>('/api/auth/mobile/id-card', sanitizedValues),
       'Failed to generate membership card'
     );
     setSubmitting(false);
@@ -313,10 +412,26 @@ export function IdCardFormFlow({ initialValues, onGenerated }: IdCardFormFlowPro
     if (result.canceled || !result.assets?.[0]) return;
 
     const asset = result.assets[0];
-    const filename = getFilenameFromAsset(asset);
-    const fileType = asset.mimeType || getMimeTypeFromFilename(filename);
+    const originalFilename = getFilenameFromAsset(asset);
 
     setUploadingPhoto(true);
+
+    let compressedPhoto: Awaited<ReturnType<typeof compressPassportPhoto>>;
+
+    try {
+      compressedPhoto = await compressPassportPhoto(asset);
+    } catch (compressionError) {
+      console.error(compressionError);
+      setUploadingPhoto(false);
+      Alert.alert(
+        'Image too large',
+        'Unable to compress this photo below 200 KB. Please choose a smaller image.'
+      );
+      return;
+    }
+
+    const filename = getCompressedPhotoFilename(originalFilename);
+    const fileType = PASSPORT_PHOTO_MIME_TYPE;
     const {
       data: uploadUrlResponse,
       error,
@@ -338,7 +453,11 @@ export function IdCardFormFlow({ initialValues, onGenerated }: IdCardFormFlowPro
     }
 
     try {
-      await uploadImageToPresignedUrl(uploadUrlResponse.data.uploadUrl, asset.uri, fileType);
+      await uploadImageToPresignedUrl(
+        uploadUrlResponse.data.uploadUrl,
+        compressedPhoto.uri,
+        fileType
+      );
       updateField('passportPhoto', uploadUrlResponse.data.key);
       updateField('passportPhotoUrl', uploadUrlResponse.data.cloudfrontUrl);
     } catch (uploadError) {
@@ -384,6 +503,7 @@ export function IdCardFormFlow({ initialValues, onGenerated }: IdCardFormFlowPro
           />
           <LabeledInput
             label="Date of Birth"
+            helperText="Format: YYYY-MM-DD"
             value={values.dateOfBirth}
             onChangeText={(text) => updateField('dateOfBirth', text)}
             placeholder="YYYY-MM-DD"

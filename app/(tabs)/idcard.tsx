@@ -3,7 +3,7 @@ import { RefreshControl, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useSelector } from 'react-redux';
-import { CreditCard, LogIn, RefreshCw } from 'lucide-react-native';
+import { RefreshCw } from 'lucide-react-native';
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -77,6 +77,12 @@ export default function IdCardScreen() {
     fetchCard();
   }, [fetchCard]);
 
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace('/(auth)/login' as any);
+    }
+  }, [isAuthenticated]);
+
   const initialValues = useMemo<IdCardFormValues>(
     () => ({
       ...EMPTY_FORM_VALUES,
@@ -97,23 +103,7 @@ export default function IdCardScreen() {
   if (!isAuthenticated) {
     return (
       <SafeAreaView className="flex-1 bg-slate-50 dark:bg-neutral-950">
-        <View className="flex-1 items-center justify-center px-6">
-          <View className="mb-5 h-16 w-16 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950">
-            <CreditCard size={30} color="#047857" />
-          </View>
-          <Text className="text-center text-2xl font-extrabold text-slate-950 dark:text-white">
-            Membership Card
-          </Text>
-          <Text className="mt-3 text-center text-slate-500 dark:text-slate-400">
-            Login to view or generate your RH Healthcare ID card.
-          </Text>
-          <Button
-            className="mt-7 h-12 rounded-lg bg-emerald-700 px-6 active:bg-emerald-800"
-            onPress={() => router.push('/(auth)/login' as any)}>
-            <LogIn size={18} color="#ffffff" />
-            <Text className="font-semibold text-white">Login</Text>
-          </Button>
-        </View>
+        <IdCardLoadingSkeleton />
       </SafeAreaView>
     );
   }

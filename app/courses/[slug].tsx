@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
+import { API_BASE_URL } from '@/const/config';
 
 const CourseDetailIcon = ({
   IconComponent,
@@ -124,12 +125,12 @@ export default function CourseScreen() {
           onPress={() =>
             isEnrolled
               ? router.push('/(tabs)/my-courses')
-              : Linking.openURL('https://www.rhhealthcaresimulation.com/courses')
+              : Linking.openURL(`${API_BASE_URL}/course`)
           }>
           <Text className="dark:text-neutral-200">
             {isEnrolled ? 'Go to My Courses' : 'Buy now'}
           </Text>
-          <IconExternalLink size={18} color={isDark ? '#e5e5e5' : '#fff'} />
+          {!isEnrolled && <IconExternalLink size={18} color={isDark ? '#e5e5e5' : '#fff'} />}
         </Button>
       </View>
     </SafeAreaView>
