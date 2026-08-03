@@ -3,10 +3,9 @@ import { View, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '@/components/ui/text';
 import { Card, CardContent } from '@/components/ui/card';
-import { router } from 'expo-router';
 import api from '@/lib/api';
 import { tryCatch } from '@/lib/apiUtils';
-import { ArrowLeft, Clock, CheckCircle2, XCircle } from 'lucide-react-native';
+import { Clock, CheckCircle2, XCircle } from 'lucide-react-native';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Purchase {
@@ -40,7 +39,9 @@ export default function PurchaseHistoryScreen() {
       );
 
       if (error || !response) {
-        console.error(rawError);
+        if (__DEV__) {
+          console.warn('Failed to load purchase history', rawError);
+        }
         setError(error || 'Failed to load purchase history.');
         return;
       }
@@ -49,7 +50,9 @@ export default function PurchaseHistoryScreen() {
         setPurchases(response.data.purchases || []);
       }
     } catch (err) {
-      console.error(err);
+      if (__DEV__) {
+        console.warn('Failed to load purchase history', err);
+      }
       setError('Failed to load purchase history.');
     } finally {
       setLoading(false);
@@ -135,7 +138,6 @@ export default function PurchaseHistoryScreen() {
                 })
               : 'N/A';
 
-            // Assuming amount is in lowest denomination (e.g. paise), divide by 100
             const displayAmount = purchase.amount.toLocaleString('en-IN', {
               style: 'currency',
               currency: 'INR',

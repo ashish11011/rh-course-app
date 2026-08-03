@@ -74,7 +74,6 @@ export default function AccountScreen() {
             style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
           />
           <View className="mb-4 h-28 w-28 items-center justify-center rounded-full bg-slate-50 dark:bg-slate-800">
-            {/* <Text className="text-4xl font-bold text-gray-600">JD</Text> */}
             <IconUserFilled size={24} color={isDark ? '#e2e8f0' : '#000'} />
           </View>
           <Text className="mb-1 text-2xl font-bold dark:text-white">

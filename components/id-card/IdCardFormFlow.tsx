@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Image, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Platform, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import * as ImagePicker from 'expo-image-picker';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
@@ -55,6 +55,8 @@ const PASSPORT_PHOTO_COMPRESSION_STEPS = [
   { longEdge: 360, quality: 0.5 },
   { longEdge: 320, quality: 0.42 },
 ];
+const LOCAL_FILE_READ_TIMEOUT_MS = 10000;
+const IMAGE_UPLOAD_TIMEOUT_MS = 30000;
 
 type IdCardFormFlowProps = {
   initialValues: IdCardFormValues;
@@ -102,9 +104,20 @@ function getCompressedPhotoFilename(filename: string) {
 }
 
 async function getUriByteSize(uri: string) {
-  const response = await fetch(uri);
-  const blob = await response.blob();
-  return blob.size;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), LOCAL_FILE_READ_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(uri, { signal: controller.signal });
+    if (!response.ok) {
+      throw new Error('Unable to read selected image');
+    }
+
+    const blob = await response.blob();
+    return blob.size;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 async function compressPassportPhoto(asset: ImagePicker.ImagePickerAsset) {
@@ -163,15 +176,31 @@ async function compressPassportPhoto(asset: ImagePicker.ImagePickerAsset) {
 }
 
 async function uploadImageToPresignedUrl(uploadUrl: string, uri: string, fileType: string) {
-  const imageResponse = await fetch(uri);
-  const blob = await imageResponse.blob();
+  const imageReadController = new AbortController();
+  const imageReadTimeout = setTimeout(() => imageReadController.abort(), LOCAL_FILE_READ_TIMEOUT_MS);
+
+  let blob: Blob;
+  try {
+    const imageResponse = await fetch(uri, { signal: imageReadController.signal });
+    if (!imageResponse.ok) {
+      throw new Error('Unable to read selected image');
+    }
+    blob = await imageResponse.blob();
+  } finally {
+    clearTimeout(imageReadTimeout);
+  }
+
+  const uploadController = new AbortController();
+  const uploadTimeout = setTimeout(() => uploadController.abort(), IMAGE_UPLOAD_TIMEOUT_MS);
+
   const uploadResponse = await fetch(uploadUrl, {
     method: 'PUT',
     headers: {
       'Content-Type': fileType,
     },
     body: blob,
-  });
+    signal: uploadController.signal,
+  }).finally(() => clearTimeout(uploadTimeout));
 
   if (!uploadResponse.ok) {
     throw new Error('Failed to upload image');
@@ -383,7 +412,9 @@ export function IdCardFormFlow({ initialValues, onGenerated }: IdCardFormFlowPro
     setSubmitting(false);
 
     if (error) {
-      console.error(rawError);
+      if (__DEV__) {
+        console.warn('Failed to generate membership card', rawError);
+      }
       Alert.alert('Generate failed', error);
       return;
     }
@@ -395,7 +426,10 @@ export function IdCardFormFlow({ initialValues, onGenerated }: IdCardFormFlowPro
   };
 
   const handlePickPhoto = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const permission =
+      Platform.OS === 'android'
+        ? { granted: true }
+        : await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permission.granted) {
       Alert.alert('Permission needed', 'Please allow photo access to upload your card image.');
@@ -421,7 +455,9 @@ export function IdCardFormFlow({ initialValues, onGenerated }: IdCardFormFlowPro
     try {
       compressedPhoto = await compressPassportPhoto(asset);
     } catch (compressionError) {
-      console.error(compressionError);
+      if (__DEV__) {
+        console.warn('Failed to compress image', compressionError);
+      }
       setUploadingPhoto(false);
       Alert.alert(
         'Image too large',
@@ -446,7 +482,9 @@ export function IdCardFormFlow({ initialValues, onGenerated }: IdCardFormFlowPro
     );
 
     if (error || !uploadUrlResponse?.data) {
-      console.error(rawError);
+      if (__DEV__) {
+        console.warn('Failed to prepare image upload', rawError);
+      }
       setUploadingPhoto(false);
       Alert.alert('Upload failed', error || 'Failed to prepare image upload');
       return;
@@ -461,7 +499,9 @@ export function IdCardFormFlow({ initialValues, onGenerated }: IdCardFormFlowPro
       updateField('passportPhoto', uploadUrlResponse.data.key);
       updateField('passportPhotoUrl', uploadUrlResponse.data.cloudfrontUrl);
     } catch (uploadError) {
-      console.error(uploadError);
+      if (__DEV__) {
+        console.warn('Failed to upload image', uploadError);
+      }
       Alert.alert('Upload failed', 'Unable to upload image. Please try again.');
     } finally {
       setUploadingPhoto(false);

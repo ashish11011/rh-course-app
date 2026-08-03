@@ -16,6 +16,14 @@ export type ApiResult<T> = ApiSuccess<T> | ApiFailure;
 
 export function getApiErrorMessage(error: unknown, fallbackMessage = 'Something went wrong') {
   if (axios.isAxiosError(error)) {
+    if (error.code === 'ECONNABORTED') {
+      return 'The request timed out. Please check your connection and try again.';
+    }
+
+    if (!error.response) {
+      return 'Network request failed. Please check your connection and try again.';
+    }
+
     const responseData = error.response?.data as
       | { message?: string; error?: string }
       | string

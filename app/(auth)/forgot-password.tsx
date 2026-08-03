@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Platform, TouchableOpacity, Alert } from 'react-native';
+import { View, TouchableOpacity, Alert } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Text } from '@/components/ui/text';
 import { Input } from '@/components/ui/input';
@@ -33,8 +33,7 @@ export default function ForgotPasswordScreen() {
       }
 
       setStep(2);
-    } catch (error) {
-      console.error(error);
+    } catch {
       Alert.alert('Error', 'Failed to send code');
     } finally {
       setLoading(false);
@@ -61,8 +60,7 @@ export default function ForgotPasswordScreen() {
       Alert.alert('Success', 'Password reset successfully!', [
         { text: 'OK', onPress: () => router.replace('/(auth)/login') },
       ]);
-    } catch (error) {
-      console.error(error);
+    } catch {
       Alert.alert('Error', 'Failed to reset password');
     } finally {
       setLoading(false);

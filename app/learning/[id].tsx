@@ -12,11 +12,13 @@ import * as NavigationBar from 'expo-navigation-bar';
 import { tryCatch } from '@/lib/apiUtils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { viewCertificate } from '@/lib/certificateDownload';
+import { cloudfrontAssetUrl } from '@/lib/cloudfront';
 
 const MEDIA_BASE_URL = 'https://d2c3lsl35lix55.cloudfront.net';
 
-function buildMediaUrl(mediaUrl: string) {
-  const trimmedUrl = mediaUrl.trim();
+function buildMediaUrl(mediaUrl: unknown) {
+  const trimmedUrl = typeof mediaUrl === 'string' ? mediaUrl.trim() : '';
+  if (!trimmedUrl) return '';
 
   if (/^https?:\/\//i.test(trimmedUrl)) {
     return trimmedUrl;
@@ -39,7 +41,6 @@ export default function EnrolledCourseScreen() {
   const [courseData, setCourseData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Video Player state
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
 
   const player = useVideoPlayer(activeVideoUrl, (player) => {
@@ -49,13 +50,11 @@ export default function EnrolledCourseScreen() {
 
   useEffect(() => {
     if (activeVideoUrl) {
-      // Allow rotation when video is playing
       ScreenOrientation.unlockAsync();
       if (Platform.OS === 'android') {
         NavigationBar.setVisibilityAsync("hidden");
       }
     } else {
-      // Lock back to portrait when closed
       ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
       if (Platform.OS === 'android') {
         NavigationBar.setVisibilityAsync("visible");
@@ -85,7 +84,9 @@ export default function EnrolledCourseScreen() {
         }
       } catch (err) {
         if (!isMounted) return;
-        console.error(err);
+        if (__DEV__) {
+          console.warn('Failed to fetch course data', err);
+        }
         setError('An error occurred.');
       } finally {
         if (isMounted) setLoading(false);
@@ -100,6 +101,7 @@ export default function EnrolledCourseScreen() {
     if (!item.mediaUrl) return;
 
     const finalUrl = buildMediaUrl(item.mediaUrl);
+    if (!finalUrl) return;
 
     const mediaPath = finalUrl.split('?')[0].toLowerCase();
     const isMp4 = item.mediaType === 'mp4' || item.mediaType === 'video' || mediaPath.endsWith('.mp4');
@@ -111,7 +113,9 @@ export default function EnrolledCourseScreen() {
       try {
         await viewCertificate(finalUrl);
       } catch (openError) {
-        console.error(openError);
+        if (__DEV__) {
+          console.warn('Unable to open course PDF', openError);
+        }
         Alert.alert('Unable to open PDF', 'Please try again later.');
       }
     }
@@ -141,16 +145,21 @@ export default function EnrolledCourseScreen() {
 
   const { course } = courseData;
   const items = course.items || [];
+  const bannerImageUrl = cloudfrontAssetUrl(course.bannerImageUrl);
 
   return (
     <SafeAreaView className={`flex-1 ${isDark ? 'bg-neutral-950' : 'bg-white'}`} edges={['bottom']}>
       <Stack.Screen options={{ title: course.title, headerBackTitle: 'Back' }} />
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <Image
-          source={{ uri: course.bannerImageUrl?.startsWith('http') ? course.bannerImageUrl : `https://d2c3lsl35lix55.cloudfront.net/${course.bannerImageUrl}` }}
-          className="h-52 w-full object-cover"
-          resizeMode="cover"
-        />
+        {bannerImageUrl ? (
+          <Image
+            source={{ uri: bannerImageUrl }}
+            className="h-52 w-full object-cover"
+            resizeMode="cover"
+          />
+        ) : (
+          <View className="h-52 w-full bg-slate-100 dark:bg-neutral-800" />
+        )}
         <View className="flex-1 px-4 py-6">
           <Text className="text-xl font-semibold dark:text-white">{course.title}</Text>
           <Text className="mt-2 text-sm text-gray-500 dark:text-gray-400 leading-6">{course.description}</Text>
@@ -180,7 +189,7 @@ export default function EnrolledCourseScreen() {
                   activeOpacity={0.7}
                   onPress={() => handleItemPress(item)}>
                   <View className="flex-1 flex-row items-center gap-3">
-                    {(item.mediaType === 'pdf' || (item.mediaUrl && item.mediaUrl.toLowerCase().endsWith('.pdf'))) ? (
+                    {(item.mediaType === 'pdf' || buildMediaUrl(item.mediaUrl).toLowerCase().endsWith('.pdf')) ? (
                       <FileText size={28} color={isDark ? '#e5e5e5' : '#333'} strokeWidth={1.5} />
                     ) : (
                       <PlayCircle size={28} color={isDark ? '#e5e5e5' : '#333'} strokeWidth={1.5} />
@@ -202,7 +211,6 @@ export default function EnrolledCourseScreen() {
         </View>
       </ScrollView>
 
-      {/* Fullscreen Video Player Modal */}
       <Modal
         visible={!!activeVideoUrl}
         animationType="slide"

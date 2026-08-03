@@ -19,6 +19,9 @@
       }
     },
     "production": {
+      "env": {
+        "NODE_ENV": "production"
+      },
       "autoIncrement": true
     }
   },

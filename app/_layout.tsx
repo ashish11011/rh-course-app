@@ -33,13 +33,10 @@ import StartupLoadingScreen from '@/src/screens/StartupLoadingScreen';
 import UpdateRequiredScreen from '@/src/screens/UpdateRequiredScreen';
 import { NotificationPermissionSheet } from '@/components/NotificationPermissionSheet';
 
-// Register background handler early
 if (Platform.OS !== 'web') {
   setBackgroundMessageHandler(
     getMessaging(getApp()),
-    async (remoteMessage) => {
-      console.log('Message handled in the background!', remoteMessage);
-    }
+    async () => {}
   );
 }
 
@@ -61,10 +58,10 @@ function AppContent() {
       return;
     }
 
-    ScreenCapture.preventScreenCaptureAsync();
+    ScreenCapture.preventScreenCaptureAsync().catch(() => undefined);
 
     return () => {
-      ScreenCapture.allowScreenCaptureAsync();
+      ScreenCapture.allowScreenCaptureAsync().catch(() => undefined);
     };
   }, []);
 
@@ -92,14 +89,18 @@ function AppContent() {
               dispatch(logout());
               return;
             }
-            console.error('Failed to fetch user profile', rawError);
+            if (__DEV__) {
+              console.warn('Failed to fetch user profile', rawError);
+            }
           }
           if (userRes?.data?.user) {
             dispatch(setCredentials({ token, user: userRes.data.user }));
           }
         }
       } catch (e) {
-        console.error('Failed to load token');
+        if (__DEV__) {
+          console.warn('Failed to load token', e);
+        }
       } finally {
         setIsReady(true);
       }
@@ -129,7 +130,9 @@ function AppContent() {
     try {
       await openNotificationSettings();
     } catch (error) {
-      console.error('Failed to open notification settings', error);
+      if (__DEV__) {
+        console.warn('Failed to open notification settings', error);
+      }
     }
   };
 

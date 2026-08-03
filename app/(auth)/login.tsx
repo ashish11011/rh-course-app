@@ -42,7 +42,9 @@ export default function LoginScreen() {
           }
         }
       } catch (tokenError) {
-        console.error('Failed to prepare device details for login', tokenError);
+        if (__DEV__) {
+          console.warn('Failed to prepare device details for login', tokenError);
+        }
       }
 
       const { data: response, error } = await tryCatch(
@@ -55,10 +57,14 @@ export default function LoginScreen() {
         return;
       }
       
-      const { IdToken, RefreshToken } = response.data.tokens;
+      const { IdToken, RefreshToken } = response.data?.tokens || {};
+      if (!IdToken) {
+        Alert.alert('Login Failed', 'The server returned an invalid login response.');
+        return;
+      }
+
       const authUsername = response.data.username || email.trim();
 
-      // Save token securely
       await SecureStore.setItemAsync('userToken', IdToken);
       await SecureStore.setItemAsync('authUsername', authUsername);
       if (RefreshToken) {
@@ -72,16 +78,16 @@ export default function LoginScreen() {
         'Failed to fetch user after login'
       );
       if (rawError) {
-        console.error('Failed to fetch user after login', rawError);
+        if (__DEV__) {
+          console.warn('Failed to fetch user after login', rawError);
+        }
       }
       if (userRes?.data?.user) {
         dispatch(setCredentials({ token: IdToken, user: userRes.data.user }));
       }
 
-      // Navigate to tabs
       router.replace('/(tabs)');
-    } catch (error) {
-      console.error(error);
+    } catch {
       Alert.alert('Login Failed', 'Something went wrong');
     } finally {
       setLoading(false);

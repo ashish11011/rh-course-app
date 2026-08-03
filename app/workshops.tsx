@@ -3,11 +3,9 @@ import { Alert, View, ScrollView, TouchableOpacity, Linking } from 'react-native
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '@/components/ui/text';
 import { Card, CardContent } from '@/components/ui/card';
-import { router } from 'expo-router';
 import api from '@/lib/api';
 import { tryCatch } from '@/lib/apiUtils';
 import {
-  ArrowLeft,
   CalendarDays,
   CheckCircle2,
   Clock,
@@ -53,8 +51,10 @@ export default function WorkshopsScreen() {
         'Failed to load workshops.'
       );
 
-      if (error || !response) {
-        console.error(rawError);
+    if (error || !response) {
+        if (__DEV__) {
+          console.warn('Failed to load workshops', rawError);
+        }
         setError(error || 'Failed to load workshops.');
         return;
       }
@@ -63,7 +63,9 @@ export default function WorkshopsScreen() {
         setWorkshops(response.data.workshops || []);
       }
     } catch (err) {
-      console.error(err);
+      if (__DEV__) {
+        console.warn('Failed to load workshops', err);
+      }
       setError('Failed to load workshops.');
     } finally {
       setLoading(false);
@@ -118,20 +120,15 @@ export default function WorkshopsScreen() {
     try {
       await viewCertificate(url);
     } catch (viewError) {
-      console.error(viewError);
+      if (__DEV__) {
+        console.warn('Unable to open workshop certificate', viewError);
+      }
       Alert.alert('Unable to open certificate', 'Please try again later.');
     }
   };
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50 dark:bg-neutral-950">
-      {/* <View className="flex-row items-center border-b border-gray-200 bg-white px-4 py-4 dark:border-neutral-800 dark:bg-neutral-900">
-        <TouchableOpacity onPress={() => router.back()} className="mr-4">
-          <ArrowLeft size={24} color="#666" />
-        </TouchableOpacity>
-        <Text className="text-xl font-bold dark:text-white">My Workshops</Text>
-      </View> */}
-
       {loading ? (
         <ScrollView className="flex-1 px-4 pt-4" showsVerticalScrollIndicator={false}>
           {[1, 2, 3].map((key) => (

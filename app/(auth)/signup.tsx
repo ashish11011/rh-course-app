@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   View,
-  Platform,
   TouchableOpacity,
   Alert,
 } from 'react-native';
@@ -34,21 +33,18 @@ export default function SignupScreen() {
 
     setLoading(true);
     try {
-      const { error, rawError } = await tryCatch(
+      const { error } = await tryCatch(
         () => api.post('/api/auth/mobile/signup', { name, email, password, phone }),
         'Signup failed'
       );
 
       if (error) {
-        console.log(rawError);
         Alert.alert('Signup Failed', error);
         return;
       }
 
-      // Proceed to OTP verification screen
       router.push({ pathname: '/(auth)/verify-otp', params: { email } });
-    } catch (error) {
-      console.log(error);
+    } catch {
       Alert.alert('Signup Failed', 'Something went wrong');
     } finally {
       setLoading(false);

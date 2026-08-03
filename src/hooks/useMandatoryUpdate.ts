@@ -51,9 +51,11 @@ export function useMandatoryUpdate(): MandatoryUpdateState {
             installedVersion,
             config,
           });
+      }
+    } catch (error) {
+        if (__DEV__) {
+          console.warn('Mandatory update check failed. Continuing app startup.', error);
         }
-      } catch (error) {
-        console.warn('Mandatory update check failed. Continuing app startup.', error);
 
         if (mounted) {
           setState((current) => ({

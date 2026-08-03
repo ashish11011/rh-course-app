@@ -1,21 +1,26 @@
-import React, { useState } from 'react';
-import { View, Text, Image, ScrollView, RefreshControl, StyleSheet, Dimensions } from 'react-native';
-import { useNetInfo } from '@react-native-community/netinfo';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, Image, ScrollView, RefreshControl } from 'react-native';
 import { useColorScheme } from 'nativewind';
 import { StatusBar } from 'expo-status-bar';
-
-const { height } = Dimensions.get('window');
 
 export default function OfflineScreen() {
   const { colorScheme } = useColorScheme();
   const [refreshing, setRefreshing] = useState(false);
-  const netInfo = useNetInfo();
+  const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
-    // Simulate checking network for a short time
-    setTimeout(() => {
+    refreshTimeoutRef.current = setTimeout(() => {
       setRefreshing(false);
+      refreshTimeoutRef.current = null;
     }, 1000);
   }, []);
 

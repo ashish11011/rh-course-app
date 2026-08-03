@@ -87,18 +87,16 @@ export function openNotificationSettings() {
 export async function getFCMToken() {
   try {
     const token = await getToken(getAppMessaging());
-    console.log('FCM Token:', token);
     return token;
   } catch (error) {
-    console.error('Failed to get FCM token', error);
+    if (__DEV__) {
+      console.warn('Failed to get FCM token', error);
+    }
   }
 }
 
 export function setupNotificationListeners() {
-  // Listen to foreground notifications
-  const unsubscribe = onMessage(getAppMessaging(), async remoteMessage => {
-    console.log('A new FCM message arrived in the foreground!', JSON.stringify(remoteMessage));
-    // You can show a custom toast or alert here since background notifications don't automatically show in foreground
+  const unsubscribe = onMessage(getAppMessaging(), async () => {
   });
 
   return unsubscribe;

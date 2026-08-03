@@ -62,7 +62,9 @@ export default function IdCardScreen() {
     );
 
     if (error) {
-      console.error(rawError);
+      if (__DEV__) {
+        console.warn('Failed to fetch membership card', rawError);
+      }
       setErrorMessage(error);
     } else {
       setCard(response?.data?.card || null);

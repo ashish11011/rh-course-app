@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Platform, TouchableOpacity, Alert } from 'react-native';
+import { View, TouchableOpacity, Alert } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Text } from '@/components/ui/text';
 import { Input } from '@/components/ui/input';
@@ -34,8 +34,7 @@ export default function VerifyOtpScreen() {
       Alert.alert('Success', 'Account verified successfully!', [
         { text: 'OK', onPress: () => router.replace('/(auth)/login') }
       ]);
-    } catch (error) {
-      console.error(error);
+    } catch {
       Alert.alert('Verification Failed', 'Invalid code');
     } finally {
       setLoading(false);

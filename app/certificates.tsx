@@ -75,7 +75,9 @@ export default function CertificatesScreen() {
     );
 
     if (error || !response) {
-      console.error(rawError);
+      if (__DEV__) {
+        console.warn('Failed to load certificates', rawError);
+      }
       setErrorMessage(error || 'Failed to load certificates.');
       setLoading(false);
       setRefreshing(false);
@@ -119,7 +121,9 @@ export default function CertificatesScreen() {
     try {
       await viewCertificate(url);
     } catch (error) {
-      console.error(error);
+      if (__DEV__) {
+        console.warn('Unable to open certificate', error);
+      }
       Alert.alert('Unable to open certificate', 'Please try again later.');
     }
   }, []);
@@ -138,7 +142,9 @@ export default function CertificatesScreen() {
         Alert.alert('Download complete', 'Certificate saved to your Downloads folder.');
       }
     } catch (error) {
-      console.error(error);
+      if (__DEV__) {
+        console.warn('Unable to download certificate', error);
+      }
       Alert.alert('Download failed', 'Unable to download this certificate. Please try again.');
     } finally {
       setDownloadingId('');
@@ -194,7 +200,7 @@ export default function CertificatesScreen() {
             {/* <Button
               className="h-11 flex-1 rounded-lg bg-emerald-700 active:bg-emerald-800"
               disabled={isDownloading}
-              onPress={() => handleView(item)}>
+              onPress={() => handleDownload(item)}>
               {isDownloading ? (
                 <ActivityIndicator color="#ffffff" />
               ) : (

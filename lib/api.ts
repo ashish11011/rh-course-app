@@ -9,6 +9,8 @@ const api = axios.create({
   timeout: 10000,
 });
 
+const AUTH_REFRESH_TIMEOUT_MS = 10000;
+
 type RetriableRequestConfig = InternalAxiosRequestConfig & {
   _retry?: boolean;
 };
@@ -106,7 +108,8 @@ async function refreshAccessToken() {
       {
         refreshToken,
         username,
-      }
+      },
+      { timeout: AUTH_REFRESH_TIMEOUT_MS }
     );
 
     const newToken = response.data.tokens?.IdToken;
@@ -126,7 +129,9 @@ async function refreshAccessToken() {
 
     return newToken;
   } catch (error) {
-    console.error('Failed to refresh auth token', error);
+    if (__DEV__) {
+      console.warn('Failed to refresh auth token', error);
+    }
     return null;
   }
 }

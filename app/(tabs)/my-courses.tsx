@@ -11,6 +11,7 @@ import { Course, fetchPurchasedCourses } from '@/store/coursesSlice';
 import { Clock, GraduationCap } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { Card, CardContent } from '@/components/ui/card';
+import { cloudfrontAssetUrl } from '@/lib/cloudfront';
 
 export default function MyCoursesScreen() {
   const { colorScheme } = useColorScheme();
@@ -51,13 +52,17 @@ export default function MyCoursesScreen() {
     );
   }
 
-  const renderItem = ({ item }: { item: Course }) => (
+  const renderItem = ({ item }: { item: Course }) => {
+    const imageUrl = cloudfrontAssetUrl(item.bannerImageUrl);
+
+    return (
     <Pressable onPress={() => router.push(`/learning/${item.courseId}` as any)}>
       <Card className="mb-4 overflow-hidden border-0 bg-white p-0 shadow-sm dark:bg-neutral-900">
-        <Image
-          source={{ uri: item.bannerImageUrl.startsWith('http') ? item.bannerImageUrl : `https://d2c3lsl35lix55.cloudfront.net/${item.bannerImageUrl}` }}
-          className="h-40 w-full object-cover"
-        />
+        {imageUrl ? (
+          <Image source={{ uri: imageUrl }} className="h-40 w-full object-cover" />
+        ) : (
+          <View className="h-40 w-full bg-slate-100 dark:bg-neutral-800" />
+        )}
         <CardContent className="p-4">
           <Text className="line-clamp-2 text-lg font-semibold dark:text-white">
             {item.title}
@@ -82,7 +87,8 @@ export default function MyCoursesScreen() {
         </CardContent>
       </Card>
     </Pressable>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={{ flex: 1 }} className="dark:bg-neutral-950">

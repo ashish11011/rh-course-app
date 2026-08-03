@@ -10,6 +10,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { PublicCourse } from '@/store/coursesSlice';
 import { Skeleton } from '@/components/ui/skeleton';
+import { courseAssetUrl } from '@/lib/cloudfront';
 
 const CardDetailIcon = ({
   IconComponent,
@@ -72,27 +73,35 @@ export default function SearchScreen() {
             </View>
           ) : filteredCourses.length > 0 ? (
             <View className="gap-6">
-              {filteredCourses.map((course) => (
-                <TouchableOpacity
-                  key={course.slug}
-                  className="mb-4 w-full"
-                  activeOpacity={0.8}
-                  onPress={() => handleCoursePress(course)}>
-                  <Image
-                    source={{ uri: course.bannerImageUrl.startsWith('http') ? course.bannerImageUrl : `https://d12z58c4k5tsm1.cloudfront.net/${course.bannerImageUrl}` }}
-                    className="h-48 w-full overflow-hidden rounded-lg object-cover"
-                    resizeMode="cover"
-                  />
-                  <Text className="mt-3 text-lg font-medium leading-6 dark:text-white">
-                    {course.title}
-                  </Text>
-                  <View className="flex-row flex-wrap gap-x-6 gap-y-2">
-                    <CardDetailIcon IconComponent={IconClock} label={`${course.courseHours} Hrs`} />
-                    <CardDetailIcon IconComponent={MonitorPlay} label={course.totalLectures} />
-                    <CardDetailIcon IconComponent={IconCertificate} label={'Certificate'} />
-                  </View>
-                </TouchableOpacity>
-              ))}
+              {filteredCourses.map((course) => {
+                const imageUrl = courseAssetUrl(course.bannerImageUrl);
+
+                return (
+                  <TouchableOpacity
+                    key={course.slug}
+                    className="mb-4 w-full"
+                    activeOpacity={0.8}
+                    onPress={() => handleCoursePress(course)}>
+                    {imageUrl ? (
+                      <Image
+                        source={{ uri: imageUrl }}
+                        className="h-48 w-full overflow-hidden rounded-lg object-cover"
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View className="h-48 w-full rounded-lg bg-slate-100 dark:bg-neutral-800" />
+                    )}
+                    <Text className="mt-3 text-lg font-medium leading-6 dark:text-white">
+                      {course.title}
+                    </Text>
+                    <View className="flex-row flex-wrap gap-x-6 gap-y-2">
+                      <CardDetailIcon IconComponent={IconClock} label={`${course.courseHours} Hrs`} />
+                      <CardDetailIcon IconComponent={MonitorPlay} label={course.totalLectures} />
+                      <CardDetailIcon IconComponent={IconCertificate} label={'Certificate'} />
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           ) : (
             <View className="mt-20 items-center justify-center">

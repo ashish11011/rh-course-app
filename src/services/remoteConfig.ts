@@ -88,7 +88,9 @@ async function fetchRemoteConfigOnce() {
       })
       .catch((error) => {
         remoteConfigFetchSucceeded = false;
-        console.warn('Failed to fetch Firebase Remote Config. Falling back to cached values.', error);
+        if (__DEV__) {
+          console.warn('Failed to fetch Firebase Remote Config. Falling back to cached values.', error);
+        }
         return false;
       })
       .finally(() => {
@@ -127,7 +129,9 @@ function parseAppUpdateConfigJson(rawConfig: string): AppUpdateRemoteConfigJson 
           : APP_UPDATE_CONFIG_DEFAULT_VALUE.force_update,
     };
   } catch (error) {
-    console.warn('Invalid app_update_config JSON. Falling back to safe defaults.', error);
+    if (__DEV__) {
+      console.warn('Invalid app_update_config JSON. Falling back to safe defaults.', error);
+    }
     return APP_UPDATE_CONFIG_DEFAULT_VALUE;
   }
 }

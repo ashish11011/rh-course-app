@@ -63,7 +63,6 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: NAV_THEME[colorScheme ?? 'light'].colors.primary,
-        // headerRight: () => <ThemeToggle />,
       }}>
       <Tabs.Screen
         name="index"

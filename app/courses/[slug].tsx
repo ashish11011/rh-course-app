@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { API_BASE_URL } from '@/const/config';
+import { courseAssetUrl } from '@/lib/cloudfront';
 
 const CourseDetailIcon = ({
   IconComponent,
@@ -50,6 +51,7 @@ export default function CourseScreen() {
   const isEnrolled = courses.some(
     (c) => c.slug === slug || c.slug === `/courses/${slug}` || c.slug === course?.slug
   );
+  const bannerImageUrl = courseAssetUrl(course?.bannerImageUrl);
 
   if (!course) {
     return (
@@ -65,15 +67,15 @@ export default function CourseScreen() {
     <SafeAreaView className={`flex-1 ${isDark ? 'bg-neutral-950' : 'bg-white'}`} edges={['bottom']}>
       <Stack.Screen options={{ title: course.title, headerBackTitle: 'Back' }} />
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <Image
-          source={{
-            uri: course.bannerImageUrl.startsWith('http')
-              ? course.bannerImageUrl
-              : `https://d12z58c4k5tsm1.cloudfront.net/${course.bannerImageUrl}`,
-          }}
-          className="h-52 w-full object-cover"
-          resizeMode="cover"
-        />
+        {bannerImageUrl ? (
+          <Image
+            source={{ uri: bannerImageUrl }}
+            className="h-52 w-full object-cover"
+            resizeMode="cover"
+          />
+        ) : (
+          <View className="h-52 w-full bg-slate-100 dark:bg-neutral-800" />
+        )}
         <View className="flex-1 px-4 py-6">
           <Text className="text-xl font-semibold">{course.title}</Text>
 
@@ -95,11 +97,10 @@ export default function CourseScreen() {
             />
           </View>
 
-          {/* What you will learn */}
           <View className="mt-10">
             <SectionHeading title="What you will learn" />
             <View className="mt-3 flex-col gap-3">
-              {course.whatYouWillLearn.map((txt: string) => (
+              {(course.whatYouWillLearn || []).map((txt: string) => (
                 <View key={txt} className="flex-row gap-2 pr-4">
                   <IconCheck color={isDark ? '#fff' : '#000'} size={18} />
                   <Text
@@ -118,14 +119,13 @@ export default function CourseScreen() {
         </View>
       </ScrollView>
 
-      {/* Sticky Bottom Button */}
       <View className="border-t border-neutral-100 bg-white px-4 py-4 dark:border-neutral-900 dark:bg-neutral-950">
         <Button
           className="active:bg-neutral-700 dark:bg-green-700"
           onPress={() =>
             isEnrolled
               ? router.push('/(tabs)/my-courses')
-              : Linking.openURL(`${API_BASE_URL}/course`)
+              : Linking.openURL(`${API_BASE_URL}/courses`)
           }>
           <Text className="dark:text-neutral-200">
             {isEnrolled ? 'Go to My Courses' : 'Buy now'}

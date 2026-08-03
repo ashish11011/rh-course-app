@@ -22,7 +22,6 @@ import { cn } from '@/lib/utils';
 
 import { formatDate, formatProfession, getInitials } from './idCardUtils';
 import { UserCardRecord } from './types';
-import Svg, { Polygon } from 'react-native-svg';
 
 const RH_LOGO = require('@/assets/images/rh_logo.png');
 const NAVY = '#2196F3';
@@ -69,20 +68,6 @@ function makeQrCells(seed: string) {
 
     return ((hash >> ((row + col) % 24)) + row * 7 + col * 11) % 3 !== 0;
   });
-}
-
-function DetailIcon({
-  icon: Icon,
-}: {
-  icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
-}) {
-  return (
-    <View
-      className="h-[16px] w-[16px] items-center justify-center rounded-full"
-      style={{ backgroundColor: NAVY }}>
-      <Icon size={9} color="#ffffff" strokeWidth={2.5} />
-    </View>
-  );
 }
 
 function QrCodeBlock({ seed }: { seed: string }) {
@@ -167,16 +152,11 @@ export function IdCardView({ card, className, isPreview = false }: IdCardViewPro
         className="absolute right-0 top-0 h-[48px] w-[58px] rounded-bl-md"
         style={{ backgroundColor: NAVY }}
       />
-      {/* <View
-        className="absolute right-[98px] top-0 h-[52px] w-[3px]"
-        style={{ backgroundColor: GOLD }}
-      /> */}
 
       <View className="flex-1 px-[12px] pb-[40px] pt-[10px]">
         <View className="h-[56px] flex-row items-start">
           <View className="flex-row">
             <Image source={RH_LOGO} className="h-[28px] w-[38px]" resizeMode="contain" />
-            {/* <View className="ml-[9px] h-[38px] w-[1px] bg-slate-300" /> */}
             <View className="ml-[9px]">
               <Text className="font-extrabold leading-[19px] text-black">RH HEALTHCARE</Text>
               <Text
@@ -184,9 +164,6 @@ export function IdCardView({ card, className, isPreview = false }: IdCardViewPro
                 style={{ color: GOLD }}>
                 Simulation | Education | Research
               </Text>
-              {/* <Text className="text-[7px] font-semibold leading-[10px]" style={{ color: NAVY }}>
-                Building Competence. Enhancing Care.
-              </Text> */}
             </View>
           </View>
 
@@ -195,9 +172,6 @@ export function IdCardView({ card, className, isPreview = false }: IdCardViewPro
               Free
             </Text>
             <Text className="text-[8px] uppercase leading-[13px] text-white">Member</Text>
-            {/* <Text className="text-[12px] leading-[16px]" style={{ color: GOLD }}>
-              - * * * -
-            </Text> */}
           </View>
         </View>
 
@@ -230,38 +204,12 @@ export function IdCardView({ card, className, isPreview = false }: IdCardViewPro
                 {detailRows[1].value}
               </Text>
             </View>
-
-            {/* {detailRows.splice(0, 5).map((row) => (
-              <View key={row.label} className="flex-row items-center">
-                <DetailIcon icon={row.icon} />
-                <Text className="ml-[5px] w-[50px] text-[8px] font-bold leading-[10px] text-black">
-                  {row.label}
-                </Text>
-                <Text
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.65}
-                  className={cn(
-                    'flex-1 text-[9px] font-extrabold leading-[11px]',
-                    row.valueClassName
-                  )}
-                  style={!row.valueClassName ? { color: NAVY } : undefined}>
-                  {row.value}
-                </Text>
-                {row.label === 'Status' && card.isActive ? (
-                  <View className="ml-[3px]">
-                    <CheckCircle2 size={12} color="#118443" fill="#118443" />
-                  </View>
-                ) : null}
-              </View>
-            ))} */}
           </View>
 
           <View className="ml-[4px] items-center pt-[16px]">
             <QrCodeBlock seed={memberId} />
             <View
               className="mt-[1px] w-[58px] items-center rounded-b-md px-[3px] py-[3px]"
-              // style={{ backgroundColor: NAVY }}
             >
               <Text className="text-center text-[6px] font-semibold uppercase leading-[8px] text-black">
                 Scan to Verify

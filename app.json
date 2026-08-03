@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/rh_app_logo.png",
-    "scheme": "my-app",
+    "scheme": "rhhealthcare",
     "userInterfaceStyle": "automatic",
     "assetBundlePatterns": [
       "**/*"
@@ -26,9 +26,20 @@
       "package": "com.rh.healthcare",
       "googleServicesFile": "./google-services.json",
       "permissions": [
-        "android.permission.POST_NOTIFICATIONS",
-        "android.permission.RECORD_AUDIO"
-      ]
+        "android.permission.POST_NOTIFICATIONS"
+      ],
+      "blockedPermissions": [
+        "android.permission.ACCESS_ADSERVICES_AD_ID",
+        "android.permission.ACCESS_ADSERVICES_ATTRIBUTION",
+        "android.permission.CAMERA",
+        "android.permission.DOWNLOAD_WITHOUT_NOTIFICATION",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "com.google.android.gms.permission.AD_ID"
+      ],
+      "allowBackup": false
     },
     "web": {
       "bundler": "metro",

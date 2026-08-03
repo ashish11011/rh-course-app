@@ -1,7 +1,7 @@
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Text } from '@/components/ui/text';
 import { IconCertificate, IconClock, IconUserCircle } from '@tabler/icons-react-native';
-import { Link, router } from 'expo-router';
+import { router } from 'expo-router';
 import { LucideIcon, MonitorPlay } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import React, { useEffect, useState, useCallback } from 'react';
@@ -19,6 +19,7 @@ import { RootState, AppDispatch } from '@/store';
 import { PublicCourse, fetchAllCourses } from '@/store/coursesSlice';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getFeaturedSectionConfig } from '@/src/services/remoteConfig';
+import { courseAssetUrl } from '@/lib/cloudfront';
 
 type HomeSectionConfig = {
   id:
@@ -52,7 +53,9 @@ export default function FeaturedScreen() {
         }
       }
     } catch (error) {
-      console.error('Error fetching remote config:', error);
+      if (__DEV__) {
+        console.warn('Error fetching remote config:', error);
+      }
     } finally {
       setLoading(false);
     }
@@ -64,8 +67,11 @@ export default function FeaturedScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([fetchConfig(), dispatch(fetchAllCourses())]);
-    setRefreshing(false);
+    try {
+      await Promise.all([fetchConfig(), dispatch(fetchAllCourses())]);
+    } finally {
+      setRefreshing(false);
+    }
   }, [fetchConfig, dispatch]);
 
   const handleCoursePress = (course: PublicCourse) => {
@@ -162,7 +168,6 @@ export default function FeaturedScreen() {
           sections.map((sec) => renderSection(sec.id))
         ) : (
           <View>
-            {/* Fallback layout if config not present */}
             {renderSection('hero')}
             {renderSection('seminar_registration')}
             {renderSection('course_crousel')}
@@ -178,7 +183,6 @@ export default function FeaturedScreen() {
 const HomeSkeleton = () => {
   return (
     <View className="mt-4 gap-12 px-4">
-      {/* Hero skeleton */}
       <View className="flex-row gap-4">
         <Skeleton className="h-14 w-14 rounded-full bg-gray-200 dark:bg-neutral-800" />
         <View className="justify-center gap-2">
@@ -186,9 +190,7 @@ const HomeSkeleton = () => {
           <Skeleton className="h-4 w-24 rounded bg-gray-200 dark:bg-neutral-800" />
         </View>
       </View>
-      {/* Banner skeleton */}
       <Skeleton className="aspect-[16/9] w-full rounded-lg bg-gray-200 dark:bg-neutral-800" />
-      {/* Course Carousel skeleton */}
       <View>
         <Skeleton className="mb-4 h-6 w-56 rounded bg-gray-200 dark:bg-neutral-800" />
         <View className="flex-row gap-4">
@@ -241,8 +243,7 @@ function CourseCardsHorizontal({
         showsVerticalScrollIndicator={false}
         contentContainerClassName="gap-8">
         {allCoursesLoading
-          ? // Skeleton Loader
-            Array.from({ length: 3 }).map((_, index) => (
+          ? Array.from({ length: 3 }).map((_, index) => (
               <View key={index} className="w-[70vw]">
                 <Skeleton className="mx-auto h-40 w-full rounded-lg bg-gray-200 dark:bg-neutral-800" />
                 <Skeleton className="mt-3 h-5 w-3/4 rounded bg-gray-200 dark:bg-neutral-800" />
@@ -253,21 +254,23 @@ function CourseCardsHorizontal({
               </View>
             ))
           : allCourses.map((courseItem) => {
+              const imageUrl = courseAssetUrl(courseItem.bannerImageUrl);
+
               return (
                 <TouchableOpacity
                   key={courseItem.slug}
                   className="w-[70vw]"
                   activeOpacity={0.8}
                   onPress={() => onCoursePress(courseItem)}>
-                  <Image
-                    source={{
-                      uri: courseItem.bannerImageUrl.startsWith('http')
-                        ? courseItem.bannerImageUrl
-                        : `https://d12z58c4k5tsm1.cloudfront.net/${courseItem.bannerImageUrl}`,
-                    }}
-                    className="mx-auto h-auto min-h-40 w-full overflow-hidden rounded-lg object-cover"
-                    resizeMode="cover"
-                  />
+                  {imageUrl ? (
+                    <Image
+                      source={{ uri: imageUrl }}
+                      className="mx-auto h-auto min-h-40 w-full overflow-hidden rounded-lg object-cover"
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View className="mx-auto h-40 w-full rounded-lg bg-slate-100 dark:bg-neutral-800" />
+                  )}
                   <Text className="mt-3 font-medium leading-6 dark:text-white">
                     {courseItem.title}
                   </Text>

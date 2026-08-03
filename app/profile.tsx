@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Platform, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Text } from '@/components/ui/text';
 import { Input } from '@/components/ui/input';
@@ -50,20 +50,25 @@ export default function ProfileScreen() {
       );
 
       if (error) {
-        console.error(rawError);
+        if (__DEV__) {
+          console.warn('Failed to update profile', rawError);
+        }
         Alert.alert('Update Failed', error);
         return;
       }
+
+      if (!token) {
+        Alert.alert('Update Failed', 'Please sign in again.');
+        return;
+      }
       
-      // Update local redux state
       const updatedUser = { ...user, ...payload, mobileNumber: payload.number };
       dispatch(setCredentials({ token, user: updatedUser }));
       
       Alert.alert('Success', 'Profile updated successfully!', [
         { text: 'OK', onPress: () => router.back() }
       ]);
-    } catch (error) {
-      console.error(error);
+    } catch {
       Alert.alert('Update Failed', 'Something went wrong');
     } finally {
       setLoading(false);
